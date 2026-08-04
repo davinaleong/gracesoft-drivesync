@@ -1,0 +1,33 @@
+# GraceSoft DriveSync — v2 Milestone Checklist
+
+Ground-up rebuild in its own repo. `lens-and-sync` (specifically `apps/drive-sync` in the old monorepo) is treated as exploratory/reference only — nothing is ported wholesale, but every v1 feature is accounted for below so nothing gets dropped by accident.
+
+## Stack decision
+
+Stays Node/TypeScript (Express, Prisma, Postgres, Redis, BullMQ, Pinecone, OpenAI, googleapis) — same stack as v1, now standalone with its own DB and its own auth (no more borrowing DishLens's JWT).
+
+## Milestones
+
+Carries forward the Drive→Pinecone pipeline (v1 milestones 1–11, reference `_internal-docs/02-milestones-checklist.md` in the old repo), rebuilt as its own service with real multi-tenancy and its own auth from day one.
+
+- [ ] **M1. Repo & tooling scaffold** — new repo, `package.json`, TS config, eslint, vitest, Dockerfile, docker-compose (Postgres + Redis), GitHub Actions CI. No Turbo/pnpm-workspace — single app.
+- [ ] **M2. Own accounts & auth** — `Account`/`User` model + API key issuance, hashing, and revocation; `requireApiKey` middleware. Replaces v1's borrowed-JWT trust entirely — this service verifies nothing it didn't issue itself.
+- [ ] **M3. Drive folder connection (multi-tenant)** — `DriveFolder` model (`accountId`, `folderId`, `connectedAt`, `lastVerifiedAt`, `status`); `POST /folders` takes a user-pasted folder ID, verifies the published service-account email can list it before saving; clear failure messaging when sharing hasn't happened yet.
+- [ ] **M4. Change detection** — list folder contents, track file IDs + modified timestamps, detect new/updated/deleted — ported from v1, now scoped per `DriveFolder` instead of one global list.
+- [ ] **M5. Extraction pipeline** — Docs/Sheets/PDFs/Slides → plain text. Ported from v1. Decide up front whether scanned-PDF OCR (a known v1 gap) is in scope for v2 launch or an explicit fast-follow.
+- [ ] **M6. Chunking** — token-budgeted chunks with overlap, section/heading metadata preserved. Ported from v1.
+- [ ] **M7. Embeddings** — OpenAI `text-embedding-3-small`, batched with retry/backoff. Ported from v1.
+- [ ] **M8. Vector store writes** — Pinecone upserts, now **per-account namespace** instead of one shared namespace; stable `{fileId}-{chunkIndex}` vector IDs.
+- [ ] **M9. Dedup & versioning** — content-hash skip on unchanged files, stale-vector cleanup on delete. Ported from v1.
+- [ ] **M10. Sync state persistence** — `DriveFile` model, scoped per account/folder. Ported from v1's Postgres/Prisma layer.
+- [ ] **M11. Scheduling** — BullMQ + Redis, job now iterates every connected folder across every account, with per-folder failure isolation (one broken folder doesn't stall others) and per-account rate limiting against the shared service account's Drive quota.
+- [ ] **M12. Retrieval endpoint** — query API returning top-k chunks. Unlike v1, **returns chunk text plus attribution**, not metadata-only — needed for actual AI consumption. Scoped strictly to the caller's own namespace.
+- [ ] **M13. MCP server exposure** — wrap retrieval + document fetch as MCP tools so any MCP-compatible client (not just DishLens) can search a connected folder. New in v2, aimed at the open-source pitch.
+- [ ] **M14. Observability** — structured sync logs, failure alerts, `/status` and `/audit` endpoints. Ported from v1.
+- [ ] **M15. Open-source readiness** — README for external users, LICENSE confirmed, CONTRIBUTING + issue templates, scrubbed `.env.example`, security disclosure policy, docs site (v1's `docs/` is a reasonable starting point).
+- [ ] **M16. Testing & CI** — unit + integration coverage, full lint/typecheck/test/build pipeline (v1 had two latent CI bugs — strict Turbo env stripping and an uninstalled eslint — worth a clean-room check that this doesn't recur).
+- [ ] **M17. Deploy** — staging + production environment, migration runbook, domain/DNS. (Hosting target not yet decided for this service — v1 ran on Railway; revisit separately from DishLens's Laravel Cloud choice, since they don't need to match.)
+
+**Explicitly deferred**: per-user Google OAuth + Picker as an alternative folder-connection method (documented as a future option in the restructuring plan, not v2 scope).
+
+**Non-goals carried over from v1**: GraphQL remains out of scope.
