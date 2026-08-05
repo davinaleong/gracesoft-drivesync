@@ -1,0 +1,11 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Models land alongside the milestones that need them (Account/User in M2,
+// DriveFolder in M3, DriveFile in M11) — this file is scaffolding only for now.

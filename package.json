@@ -10,7 +10,7 @@
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "worker": "tsx src/worker.ts",
     "lint": "eslint .",
@@ -46,6 +46,8 @@
     "@typescript-eslint/eslint-plugin": "^8.7.0",
     "@typescript-eslint/parser": "^8.7.0",
     "@types/express": "^4.17.21",
-    "@types/node": "^20.16.5"
+    "@types/node": "^20.16.5",
+    "supertest": "^7.0.0",
+    "@types/supertest": "^6.0.2"
   }
 }
