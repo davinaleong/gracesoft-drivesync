@@ -107,7 +107,7 @@ Covers the v1-carried-forward pipeline plus everything new in v2 (own auth, mult
  
 - [x] Change detection: correctly identifies new/updated/deleted files from mock Drive API responses. `src/sync/changeDetection.test.ts` — added/updated/deleted individually and in combination.
 - [ ] Content hashing: identical content → identical hash; modified content → different hash.
-- [ ] Chunking: correct chunk sizes/overlap, metadata (fileId, title, chunk index, section) attached correctly.
+- [x] Chunking: correct chunk sizes/overlap, metadata (fileId, title, chunk index, section) attached correctly. `src/chunking/chunkText.test.ts` covers token-budgeted splitting, overlap (including overlap never crossing a section boundary), heading/section detection, and edge cases (empty text, invalid options). `chunkText` itself only produces `index`/`section`/`tokenCount` — `fileId`/`title` are the caller's job to attach once M11's `DriveFile` model exists to source them from.
 - [ ] Dedup logic: unchanged files skipped on re-sync, only diffs re-embedded.
 - [ ] Vector ID scheme: stable, collision-free vector IDs (`{fileId}-{chunkIndex}`); upserts don't duplicate — provider-agnostic, covered as part of the `VectorStore` contract suite.
 - [x] **API key auth**: valid key accepted and resolves to the correct account; missing/malformed/revoked/unknown key all rejected with the same external shape (no signal leak on *why* a key failed). `src/middleware/requireApiKey.test.ts`.

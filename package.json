@@ -34,6 +34,7 @@
     "express": "^4.21.0",
     "googleapis": "^144.0.0",
     "ioredis": "^5.4.1",
+    "js-tiktoken": "^1.0.21",
     "openai": "^4.65.0",
     "pdf-parse": "^2.4.5",
     "pino": "^9.4.0",
