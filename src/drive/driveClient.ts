@@ -23,6 +23,10 @@ export interface DriveClient {
    * subfolders themselves (only actual files are sync candidates).
    */
   listFiles(folderId: string): Promise<DriveFileMeta[]>;
+  /** Google-native files (Docs/Sheets/Slides) only — export as another format. */
+  exportAsText(fileId: string, exportMimeType: string): Promise<string>;
+  /** Raw file bytes (PDFs and other non-Google-native files). */
+  downloadFile(fileId: string): Promise<Buffer>;
 }
 
 function statusCodeOf(err: unknown): number | undefined {
@@ -99,6 +103,22 @@ export function createGoogleDriveClient(): DriveClient {
       } while (pageToken);
 
       return files;
+    },
+
+    async exportAsText(fileId: string, exportMimeType: string): Promise<string> {
+      const res = await drive.files.export(
+        { fileId, mimeType: exportMimeType },
+        { responseType: "text" },
+      );
+      return res.data as unknown as string;
+    },
+
+    async downloadFile(fileId: string): Promise<Buffer> {
+      const res = await drive.files.get(
+        { fileId, alt: "media", supportsAllDrives: true },
+        { responseType: "arraybuffer" },
+      );
+      return Buffer.from(res.data as ArrayBuffer);
     },
   };
 }
