@@ -6,10 +6,25 @@ import { logger } from "./lib/logger.js";
 import { createRequireApiKey } from "./middleware/requireApiKey.js";
 import { createPrismaApiKeyRepository } from "./auth/apiKeyRepository.js";
 import type { ApiKeyRepository } from "./auth/apiKeyRepository.js";
+import { createFoldersRouter } from "./folders/foldersRouter.js";
+import { createFolderService } from "./folders/folderService.js";
+import type { FolderService } from "./folders/folderService.js";
+import { createPrismaFolderRepository } from "./folders/folderRepository.js";
+import { createGoogleDriveClient } from "./drive/driveClient.js";
 
 const env = loadEnv();
 
-export function createApp(apiKeyRepository: ApiKeyRepository = createPrismaApiKeyRepository()) {
+function defaultFolderService(): FolderService {
+  return createFolderService({
+    driveClient: createGoogleDriveClient(),
+    repository: createPrismaFolderRepository(),
+  });
+}
+
+export function createApp(
+  apiKeyRepository: ApiKeyRepository = createPrismaApiKeyRepository(),
+  folderService: FolderService = defaultFolderService(),
+) {
   const app = express();
   app.use(pinoHttp({ logger }));
   app.use(express.json());
@@ -23,6 +38,8 @@ export function createApp(apiKeyRepository: ApiKeyRepository = createPrismaApiKe
   app.get("/me", requireApiKey, (req, res) => {
     res.json({ account: req.account });
   });
+
+  app.use(requireApiKey, createFoldersRouter(folderService, env.GOOGLE_SERVICE_ACCOUNT_EMAIL));
 
   return app;
 }

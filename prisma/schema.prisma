@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// DriveFolder lands in M3, DriveFile in M11.
+// DriveFile lands in M11.
 
 model Account {
   id        String   @id @default(cuid())
@@ -15,8 +15,9 @@ model Account {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users   User[]
-  apiKeys ApiKey[]
+  users        User[]
+  apiKeys      ApiKey[]
+  driveFolders DriveFolder[]
 
   @@map("accounts")
 }
@@ -49,4 +50,27 @@ model ApiKey {
 
   @@index([accountId])
   @@map("api_keys")
+}
+
+enum FolderStatus {
+  CONNECTED
+  NOT_ACCESSIBLE
+}
+
+// One row per (account, Google Drive folder). folderId is the raw
+// user-pasted Drive folder ID, not our own primary key — verified against
+// the shared service account's access before it's ever persisted as
+// CONNECTED (see M3's POST /folders).
+model DriveFolder {
+  id             String       @id @default(cuid())
+  accountId      String
+  account        Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  folderId       String
+  status         FolderStatus
+  connectedAt    DateTime     @default(now())
+  lastVerifiedAt DateTime     @default(now())
+
+  @@unique([accountId, folderId])
+  @@index([accountId])
+  @@map("drive_folders")
 }
