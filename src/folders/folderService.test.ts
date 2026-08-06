@@ -45,7 +45,7 @@ function makeInMemoryRepository(): FolderRepository {
 }
 
 function makeDriveClient(result: FolderAccessResult): DriveClient {
-  return { verifyFolderAccess: async () => result };
+  return { verifyFolderAccess: async () => result, listFiles: async () => [] };
 }
 
 describe("folderService.connectFolder", () => {
@@ -98,6 +98,7 @@ describe("folderService.verifyFolder", () => {
     const driveClient: DriveClient = {
       verifyFolderAccess: async () =>
         accessible ? { accessible: true } : { accessible: false, reason: "not-found-or-not-shared" },
+      listFiles: async () => [],
     };
     const service = createFolderService({ driveClient, repository });
 

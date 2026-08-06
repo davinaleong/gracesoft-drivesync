@@ -7,8 +7,22 @@ export type FolderAccessResult =
   | { accessible: true }
   | { accessible: false; reason: "not-found-or-not-shared" | "not-a-folder" };
 
+export interface DriveFileMeta {
+  id: string;
+  name: string;
+  mimeType: string;
+  /** ISO 8601, as returned by the Drive API. */
+  modifiedTime: string;
+}
+
 export interface DriveClient {
   verifyFolderAccess(folderId: string): Promise<FolderAccessResult>;
+  /**
+   * Direct children of the folder only (no recursion into subfolders — the
+   * connected-folder model is single-level), excluding trashed items and
+   * subfolders themselves (only actual files are sync candidates).
+   */
+  listFiles(folderId: string): Promise<DriveFileMeta[]>;
 }
 
 function statusCodeOf(err: unknown): number | undefined {
@@ -55,6 +69,36 @@ export function createGoogleDriveClient(): DriveClient {
         }
         throw err;
       }
+    },
+
+    async listFiles(folderId: string): Promise<DriveFileMeta[]> {
+      const files: DriveFileMeta[] = [];
+      let pageToken: string | undefined;
+
+      do {
+        const res = await drive.files.list({
+          q: `'${folderId}' in parents and trashed = false and mimeType != '${FOLDER_MIME_TYPE}'`,
+          fields: "nextPageToken, files(id, name, mimeType, modifiedTime)",
+          pageSize: 1000,
+          pageToken,
+          supportsAllDrives: true,
+          includeItemsFromAllDrives: true,
+        });
+
+        for (const file of res.data.files ?? []) {
+          if (!file.id || !file.name || !file.mimeType || !file.modifiedTime) continue;
+          files.push({
+            id: file.id,
+            name: file.name,
+            mimeType: file.mimeType,
+            modifiedTime: file.modifiedTime,
+          });
+        }
+
+        pageToken = res.data.nextPageToken ?? undefined;
+      } while (pageToken);
+
+      return files;
     },
   };
 }

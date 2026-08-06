@@ -105,7 +105,7 @@ Covers the v1-carried-forward pipeline plus everything new in v2 (own auth, mult
  
 ## Unit tests
  
-- [ ] Change detection: correctly identifies new/updated/deleted files from mock Drive API responses.
+- [x] Change detection: correctly identifies new/updated/deleted files from mock Drive API responses. `src/sync/changeDetection.test.ts` — added/updated/deleted individually and in combination.
 - [ ] Content hashing: identical content → identical hash; modified content → different hash.
 - [ ] Chunking: correct chunk sizes/overlap, metadata (fileId, title, chunk index, section) attached correctly.
 - [ ] Dedup logic: unchanged files skipped on re-sync, only diffs re-embedded.
