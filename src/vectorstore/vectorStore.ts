@@ -1,0 +1,23 @@
+export interface VectorRecord {
+  id: string;
+  values: number[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface ScoredVectorRecord {
+  id: string;
+  score: number;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * The pipeline never talks to a specific vector database directly — only to
+ * this interface. Every operation is namespace-scoped: namespaces are how
+ * per-account isolation is enforced (see M8's namespace-isolation decision),
+ * not an optional extra.
+ */
+export interface VectorStore {
+  upsert(namespace: string, records: VectorRecord[]): Promise<void>;
+  query(namespace: string, vector: number[], topK: number): Promise<ScoredVectorRecord[]>;
+  delete(namespace: string, ids: string[]): Promise<void>;
+}
