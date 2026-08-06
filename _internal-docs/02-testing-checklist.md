@@ -116,9 +116,9 @@ Covers the v1-carried-forward pipeline plus everything new in v2 (own auth, mult
 - [ ] **`EmbeddingProvider` contract suite**: shared test suite (correct output shape/dimensions, batch size handling, retry/backoff on transient failure) that runs against any implementation, starting with the OpenAI adapter.
 ## Multi-tenancy tests
  
-- [ ] Folder connection: pasting a folder ID the service account **can** list succeeds and persists a `DriveFolder` record.
-- [ ] Folder connection: pasting a folder ID the service account **cannot** list yet fails with a clear, actionable error (not a generic 500/404).
-- [ ] Re-verifying an already-connected folder after access is revoked (unshared) surfaces a clear "no longer accessible" status rather than silently continuing to report it as connected.
+- [x] Folder connection: pasting a folder ID the service account **can** list succeeds and persists a `DriveFolder` record. Verified via unit tests (`folderService.test.ts`, `foldersRouter.test.ts`) and an end-to-end smoke pass against a real local Postgres (stubbed `DriveClient` — no real GCP credentials wired yet).
+- [x] Folder connection: pasting a folder ID the service account **cannot** list yet fails with a clear, actionable error (not a generic 500/404). Verified: `422` with a "Share it with `<service-account-email>`" message.
+- [x] Re-verifying an already-connected folder after access is revoked (unshared) surfaces a clear "no longer accessible" status rather than silently continuing to report it as connected. Verified: `POST /folders/:id/verify` updates status to `NOT_ACCESSIBLE` and returns it with an error message, `200` not `500`.
 - [ ] **Namespace isolation**: account A's retrieval query never returns account B's chunks, even under a shared index/collection — test with two real accounts and overlapping/similar content. Runs against whichever `VectorStore` adapter is active (part of the contract suite above), not just Pinecone.
 - [ ] Sync job iterates every connected folder across every account, not just one; one account's folder list doesn't leak into another's sync run.
 ## Integration tests

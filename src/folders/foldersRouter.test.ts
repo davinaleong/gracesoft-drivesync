@@ -2,7 +2,7 @@ import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
 import type { ApiKeyRepository } from "../auth/apiKeyRepository.js";
 import { createApp } from "../server.js";
-import type { FolderService } from "./folderService.js";
+import type { ConnectFolderResult, FolderService, VerifyFolderResult } from "./folderService.js";
 import type { FolderRecord } from "./folderRepository.js";
 
 const AUTHORIZED_HEADER = "Bearer dsk_test-key";
@@ -29,7 +29,7 @@ function makeFolder(overrides: Partial<FolderRecord> = {}): FolderRecord {
 describe("POST /folders", () => {
   it("returns 201 with the folder on success", async () => {
     const folderService: FolderService = {
-      connectFolder: vi.fn(async () => ({ ok: true, folder: makeFolder() })),
+      connectFolder: vi.fn(async (): Promise<ConnectFolderResult> => ({ ok: true, folder: makeFolder() })),
       verifyFolder: vi.fn(),
       listFolders: vi.fn(),
     };
@@ -47,7 +47,7 @@ describe("POST /folders", () => {
 
   it("returns 422 with an actionable message (not a generic 500/404) when the folder isn't shared yet", async () => {
     const folderService: FolderService = {
-      connectFolder: vi.fn(async () => ({ ok: false, reason: "not-found-or-not-shared" })),
+      connectFolder: vi.fn(async (): Promise<ConnectFolderResult> => ({ ok: false, reason: "not-found-or-not-shared" })),
       verifyFolder: vi.fn(),
       listFolders: vi.fn(),
     };
@@ -112,7 +112,7 @@ describe("POST /folders/:id/verify", () => {
   it("returns 404 when the folder doesn't belong to the caller's account", async () => {
     const folderService: FolderService = {
       connectFolder: vi.fn(),
-      verifyFolder: vi.fn(async () => ({ ok: false, reason: "not-found" })),
+      verifyFolder: vi.fn(async (): Promise<VerifyFolderResult> => ({ ok: false, reason: "not-found" })),
       listFolders: vi.fn(),
     };
 
@@ -125,7 +125,7 @@ describe("POST /folders/:id/verify", () => {
   it("surfaces a clear no-longer-accessible status when access was revoked", async () => {
     const folderService: FolderService = {
       connectFolder: vi.fn(),
-      verifyFolder: vi.fn(async () => ({
+      verifyFolder: vi.fn(async (): Promise<VerifyFolderResult> => ({
         ok: false,
         reason: "not-found-or-not-shared",
         folder: makeFolder({ status: "NOT_ACCESSIBLE" }),
