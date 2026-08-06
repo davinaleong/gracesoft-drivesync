@@ -110,8 +110,8 @@ Covers the v1-carried-forward pipeline plus everything new in v2 (own auth, mult
 - [ ] Chunking: correct chunk sizes/overlap, metadata (fileId, title, chunk index, section) attached correctly.
 - [ ] Dedup logic: unchanged files skipped on re-sync, only diffs re-embedded.
 - [ ] Vector ID scheme: stable, collision-free vector IDs (`{fileId}-{chunkIndex}`); upserts don't duplicate — provider-agnostic, covered as part of the `VectorStore` contract suite.
-- [ ] **API key auth**: valid key accepted and resolves to the correct account; missing/malformed/revoked/unknown key all rejected with the same external shape (no signal leak on *why* a key failed).
-- [ ] **API key hashing**: key is never recoverable from the stored hash; pepper actually participates in the hash (changing it invalidates all existing keys, confirming it isn't a no-op).
+- [x] **API key auth**: valid key accepted and resolves to the correct account; missing/malformed/revoked/unknown key all rejected with the same external shape (no signal leak on *why* a key failed). `src/middleware/requireApiKey.test.ts`.
+- [x] **API key hashing**: key is never recoverable from the stored hash; pepper actually participates in the hash (changing it invalidates all existing keys, confirming it isn't a no-op). `src/auth/apiKeyCrypto.test.ts`.
 - [ ] **`VectorStore` contract suite**: a single provider-agnostic test suite (upsert-then-query round-trips, delete removes from subsequent queries, namespace isolation holds) that runs against any implementation. The Pinecone adapter must pass it; any contributor-added adapter (Qdrant, Weaviate, pgvector, etc.) is required to pass the same suite before merge — this is what stops a new adapter from silently breaking namespace isolation.
 - [ ] **`EmbeddingProvider` contract suite**: shared test suite (correct output shape/dimensions, batch size handling, retry/backoff on transient failure) that runs against any implementation, starting with the OpenAI adapter.
 ## Multi-tenancy tests

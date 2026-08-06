@@ -7,5 +7,46 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Models land alongside the milestones that need them (Account/User in M2,
-// DriveFolder in M3, DriveFile in M11) — this file is scaffolding only for now.
+// DriveFolder lands in M3, DriveFile in M11.
+
+model Account {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users   User[]
+  apiKeys ApiKey[]
+
+  @@map("accounts")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  @@index([accountId])
+  @@map("users")
+}
+
+// A raw API key is shown to the caller exactly once at issuance and never
+// stored. `hashedKey` is HMAC-SHA256(pepper, rawKey) — deterministic, so a
+// presented key can be looked up by recomputing the HMAC and querying for
+// equality, without ever storing (or being able to recover) the raw key.
+model ApiKey {
+  id         String    @id @default(cuid())
+  accountId  String
+  account    Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  name       String
+  hashedKey  String    @unique
+  keyPrefix  String
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+
+  @@index([accountId])
+  @@map("api_keys")
+}

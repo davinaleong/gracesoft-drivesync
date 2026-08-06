@@ -64,8 +64,11 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      # Prisma generate/migrate steps land once prisma/schema.prisma has
-      # models to generate against (starting M2 — Account/User).
+      - name: Prisma generate
+        run: npm run prisma:generate
+
+      - name: Apply migrations
+        run: npm run prisma:deploy
 
       - name: Test
         run: npm test

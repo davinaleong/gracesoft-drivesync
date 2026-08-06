@@ -3,16 +3,25 @@ import { pinoHttp } from "pino-http";
 import { fileURLToPath } from "node:url";
 import { loadEnv } from "./config/env.js";
 import { logger } from "./lib/logger.js";
+import { createRequireApiKey } from "./middleware/requireApiKey.js";
+import { createPrismaApiKeyRepository } from "./auth/apiKeyRepository.js";
+import type { ApiKeyRepository } from "./auth/apiKeyRepository.js";
 
 const env = loadEnv();
 
-export function createApp() {
+export function createApp(apiKeyRepository: ApiKeyRepository = createPrismaApiKeyRepository()) {
   const app = express();
   app.use(pinoHttp({ logger }));
   app.use(express.json());
 
+  const requireApiKey = createRequireApiKey(apiKeyRepository);
+
   app.get("/health", (_req, res) => {
     res.json({ status: "ok" });
+  });
+
+  app.get("/me", requireApiKey, (req, res) => {
+    res.json({ account: req.account });
   });
 
   return app;
