@@ -7,8 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// DriveFile lands in M11.
-
 model Account {
   id        String   @id @default(cuid())
   name      String
@@ -18,6 +16,7 @@ model Account {
   users        User[]
   apiKeys      ApiKey[]
   driveFolders DriveFolder[]
+  driveFiles   DriveFile[]
 
   @@map("accounts")
 }
@@ -69,8 +68,34 @@ model DriveFolder {
   status         FolderStatus
   connectedAt    DateTime     @default(now())
   lastVerifiedAt DateTime     @default(now())
+  driveFiles     DriveFile[]
 
   @@unique([accountId, folderId])
   @@index([accountId])
   @@map("drive_folders")
+}
+
+// One row per (DriveFolder, Drive file). Tracks exactly the state M4's
+// change detection (modifiedTime), M10's dedup (contentHash), and M10's
+// stale-vector cleanup (chunkCount) need between sync runs — those modules
+// were built as pure functions ahead of this model existing; this is where
+// they finally get real state to read from and write to (M12 wires it all
+// together).
+model DriveFile {
+  id            String      @id @default(cuid())
+  accountId     String
+  account       Account     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  driveFolderId String
+  driveFolder   DriveFolder @relation(fields: [driveFolderId], references: [id], onDelete: Cascade)
+  fileId        String
+  name          String
+  mimeType      String
+  modifiedTime  String
+  contentHash   String?
+  chunkCount    Int         @default(0)
+  lastSyncedAt  DateTime    @default(now())
+
+  @@unique([driveFolderId, fileId])
+  @@index([accountId])
+  @@map("drive_files")
 }
