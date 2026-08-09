@@ -144,9 +144,9 @@ Covers the v1-carried-forward pipeline plus everything new in v2 (own auth, mult
 ## Scheduling & observability
  
 - [ ] Cron/queue trigger fires reliably on schedule.
-- [ ] Sync status endpoint reflects last run time, success/failure, and files processed per account.
-- [ ] Audit endpoint reports accurate full index state (total files/chunks) scoped to the caller's own account.
-- [ ] Alerting fires (or the log signal it would consume exists) on repeated sync failures for a given account.
+- [x] Sync status endpoint reflects last run time, success/failure, and files processed per account. `GET /status` — `src/observability/observabilityService.test.ts` + `observabilityRouter.test.ts`. "Files processed" is interpreted as current file count per folder (there's no persisted "files touched in the last run" — see M15 decisions), verified live against real Postgres.
+- [x] Audit endpoint reports accurate full index state (total files/chunks) scoped to the caller's own account. `GET /audit` — same test files; verified live against real Postgres (2 files, 5 chunks summed correctly).
+- [x] Alerting fires (or the log signal it would consume exists) on repeated sync failures for a given account. No alerting integration exists; the log signal does — `src/sync/syncAllFolders.ts` logs `logger.error` with `accountId`/`driveFolderId`/`consecutiveFailures` once a folder's `DriveFolder.consecutiveFailures` (persisted via the new `recordSyncResult`) crosses a threshold (3). Tested in `syncAllFolders.test.ts`.
 ## Open-source readiness tests
  
 - [ ] Fresh clone + documented setup steps (README quickstart) actually gets a new contributor to a running local instance without tribal knowledge.

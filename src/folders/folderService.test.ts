@@ -23,6 +23,10 @@ function makeInMemoryRepository(): FolderRepository {
         status: "CONNECTED",
         connectedAt: now,
         lastVerifiedAt: now,
+        lastSyncedAt: null,
+        lastSyncStatus: null,
+        lastSyncError: null,
+        consecutiveFailures: 0,
       };
       rows.set(record.id, record);
       return record;
@@ -43,6 +47,19 @@ function makeInMemoryRepository(): FolderRepository {
     },
     async listAllConnected() {
       return [...rows.values()].filter((r) => r.status === "CONNECTED");
+    },
+    async recordSyncResult(id, result) {
+      const existing = rows.get(id);
+      if (!existing) throw new Error("not found");
+      const updated: FolderRecord = {
+        ...existing,
+        lastSyncedAt: new Date(),
+        lastSyncStatus: result.ok ? "SUCCESS" : "FAILED",
+        lastSyncError: result.ok ? null : result.error,
+        consecutiveFailures: result.ok ? 0 : existing.consecutiveFailures + 1,
+      };
+      rows.set(id, updated);
+      return updated;
     },
   };
 }

@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createConcurrencyLimiter } from "../scheduling/concurrencyLimiter.js";
 import type { EmbeddingProvider } from "../embeddings/embeddingProvider.js";
 import type { FolderRecord, FolderRepository } from "../folders/folderRepository.js";
+import { logger } from "../lib/logger.js";
 import type { VectorStore } from "../vectorstore/vectorStore.js";
 import type { FolderSyncer, FolderSyncSummary } from "./syncFolder.js";
 import { createSyncRunner } from "./syncAllFolders.js";
@@ -14,6 +15,10 @@ function folderRecord(overrides: Partial<FolderRecord> = {}): FolderRecord {
     status: "CONNECTED",
     connectedAt: new Date(),
     lastVerifiedAt: new Date(),
+    lastSyncedAt: null,
+    lastSyncStatus: null,
+    lastSyncError: null,
+    consecutiveFailures: 0,
     ...overrides,
   };
 }
@@ -32,8 +37,10 @@ function makeVectorStore(dimension: number | undefined): VectorStore {
   };
 }
 
-function makeFolderRepository(folders: FolderRecord[]): FolderRepository {
+function makeFolderRepository(folders: FolderRecord[]): FolderRepository & { recorded: Array<{ id: string; result: unknown }> } {
+  const recorded: Array<{ id: string; result: unknown }> = [];
   return {
+    recorded,
     upsertConnected: async () => {
       throw new Error("not used");
     },
@@ -43,6 +50,16 @@ function makeFolderRepository(folders: FolderRecord[]): FolderRepository {
     findByIdForAccount: async () => null,
     listForAccount: async (accountId) => folders.filter((f) => f.accountId === accountId),
     listAllConnected: async () => folders,
+    async recordSyncResult(id, result) {
+      recorded.push({ id, result });
+      const folder = folders.find((f) => f.id === id);
+      if (!folder) throw new Error("not found");
+      folder.lastSyncStatus = result.ok ? "SUCCESS" : "FAILED";
+      folder.lastSyncError = result.ok ? null : result.error;
+      folder.consecutiveFailures = result.ok ? 0 : folder.consecutiveFailures + 1;
+      folder.lastSyncedAt = new Date();
+      return folder;
+    },
   };
 }
 
@@ -162,5 +179,63 @@ describe("createSyncRunner", () => {
 
     await expect(runner.runSync()).rejects.toThrow(/full resync/);
     expect(syncFolderCalled).toBe(false);
+  });
+
+  it("records the sync outcome on the folder after every attempt, success or failure", async () => {
+    const folders = [
+      folderRecord({ id: "ok", accountId: "acct_1" }),
+      folderRecord({ id: "broken", accountId: "acct_1", folderId: "broken" }),
+    ];
+    const folderSyncer: FolderSyncer = {
+      syncFolder: async (_accountId, folder) => {
+        if (folder.folderId === "broken") throw new Error("drive api exploded");
+        return emptySummary;
+      },
+    };
+    const folderRepository = makeFolderRepository(folders);
+
+    const runner = createSyncRunner({
+      folderRepository,
+      folderSyncer,
+      concurrencyLimiter: createConcurrencyLimiter(5),
+      embeddingProvider: makeEmbeddingProvider(1536),
+      vectorStore: makeVectorStore(1536),
+    });
+
+    await runner.runSync();
+
+    expect(folderRepository.recorded).toContainEqual({ id: "ok", result: { ok: true } });
+    expect(folderRepository.recorded).toContainEqual({ id: "broken", result: { ok: false, error: "drive api exploded" } });
+  });
+
+  it("logs a repeated-sync-failure signal once a folder crosses the consecutive-failure threshold", async () => {
+    const folders = [folderRecord({ id: "row_1", accountId: "acct_1", folderId: "broken" })];
+    const folderSyncer: FolderSyncer = {
+      syncFolder: async () => {
+        throw new Error("drive api exploded");
+      },
+    };
+    const folderRepository = makeFolderRepository(folders);
+    const errorSpy = vi.spyOn(logger, "error").mockImplementation(() => undefined as never);
+
+    const runner = createSyncRunner({
+      folderRepository,
+      folderSyncer,
+      concurrencyLimiter: createConcurrencyLimiter(5),
+      embeddingProvider: makeEmbeddingProvider(1536),
+      vectorStore: makeVectorStore(1536),
+    });
+
+    await runner.runSync(); // failure 1 — below threshold
+    await runner.runSync(); // failure 2 — below threshold
+    expect(errorSpy).not.toHaveBeenCalled();
+
+    await runner.runSync(); // failure 3 — at threshold
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ accountId: "acct_1", driveFolderId: "row_1", consecutiveFailures: 3 }),
+      "repeated sync failures for this folder",
+    );
+
+    errorSpy.mockRestore();
   });
 });

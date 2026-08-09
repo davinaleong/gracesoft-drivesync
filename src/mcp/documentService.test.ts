@@ -25,6 +25,7 @@ function makeFileRepository(file: FileRecord | null): FileRepository {
     upsertSynced: vi.fn(),
     deleteByFileIds: vi.fn(),
     findByFileId: vi.fn(async () => file),
+    listForAccount: vi.fn(),
   };
 }
 

@@ -1,4 +1,4 @@
-import type { FolderStatus, PrismaClient } from "@prisma/client";
+import type { FolderStatus, PrismaClient, SyncStatus } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 
 export interface FolderRecord {
@@ -8,7 +8,13 @@ export interface FolderRecord {
   status: FolderStatus;
   connectedAt: Date;
   lastVerifiedAt: Date;
+  lastSyncedAt: Date | null;
+  lastSyncStatus: SyncStatus | null;
+  lastSyncError: string | null;
+  consecutiveFailures: number;
 }
+
+export type SyncResult = { ok: true } | { ok: false; error: string };
 
 export interface FolderRepository {
   upsertConnected(accountId: string, folderId: string): Promise<FolderRecord>;
@@ -17,6 +23,8 @@ export interface FolderRepository {
   listForAccount(accountId: string): Promise<FolderRecord[]>;
   /** Every CONNECTED folder across every account — what M12's sync run iterates. */
   listAllConnected(): Promise<FolderRecord[]>;
+  /** Records the outcome of one sync attempt — what M15's /status and repeated-failure log signal are derived from. */
+  recordSyncResult(id: string, result: SyncResult): Promise<FolderRecord>;
 }
 
 export function createPrismaFolderRepository(client: PrismaClient = prisma): FolderRepository {
@@ -47,6 +55,19 @@ export function createPrismaFolderRepository(client: PrismaClient = prisma): Fol
 
     async listAllConnected() {
       return client.driveFolder.findMany({ where: { status: "CONNECTED" }, orderBy: { accountId: "asc" } });
+    },
+
+    async recordSyncResult(id, result) {
+      const current = await client.driveFolder.findUniqueOrThrow({ where: { id } });
+      return client.driveFolder.update({
+        where: { id },
+        data: {
+          lastSyncedAt: new Date(),
+          lastSyncStatus: result.ok ? "SUCCESS" : "FAILED",
+          lastSyncError: result.ok ? null : result.error,
+          consecutiveFailures: result.ok ? 0 : current.consecutiveFailures + 1,
+        },
+      });
     },
   };
 }

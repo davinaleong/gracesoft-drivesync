@@ -22,6 +22,10 @@ function makeFolder(overrides: Partial<FolderRecord> = {}): FolderRecord {
     status: "CONNECTED",
     connectedAt: new Date(),
     lastVerifiedAt: new Date(),
+    lastSyncedAt: null,
+    lastSyncStatus: null,
+    lastSyncError: null,
+    consecutiveFailures: 0,
     ...overrides,
   };
 }

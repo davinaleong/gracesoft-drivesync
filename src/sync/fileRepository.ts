@@ -33,6 +33,8 @@ export interface FileRepository {
   deleteByFileIds(driveFolderId: string, fileIds: string[]): Promise<void>;
   /** Scoped to the account, regardless of which of its folders the file lives in — what M14's document fetch looks up chunkCount by. */
   findByFileId(accountId: string, fileId: string): Promise<FileRecord | null>;
+  /** Every synced file across every one of the account's folders — what M15's /audit aggregates over. */
+  listForAccount(accountId: string): Promise<FileRecord[]>;
 }
 
 export function createPrismaFileRepository(client: PrismaClient = prisma): FileRepository {
@@ -73,6 +75,10 @@ export function createPrismaFileRepository(client: PrismaClient = prisma): FileR
 
     async findByFileId(accountId, fileId) {
       return client.driveFile.findFirst({ where: { accountId, fileId } });
+    },
+
+    async listForAccount(accountId) {
+      return client.driveFile.findMany({ where: { accountId } });
     },
   };
 }

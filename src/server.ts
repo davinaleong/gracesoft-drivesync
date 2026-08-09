@@ -16,6 +16,10 @@ import { createRetrievalService } from "./retrieval/retrievalService.js";
 import type { RetrievalService } from "./retrieval/retrievalService.js";
 import { createEmbeddingProvider } from "./embeddings/index.js";
 import { createVectorStore } from "./vectorstore/index.js";
+import { createObservabilityRouter } from "./observability/observabilityRouter.js";
+import { createObservabilityService } from "./observability/observabilityService.js";
+import type { ObservabilityService } from "./observability/observabilityService.js";
+import { createPrismaFileRepository } from "./sync/fileRepository.js";
 
 const env = loadEnv();
 
@@ -33,10 +37,18 @@ function defaultRetrievalService(): RetrievalService {
   });
 }
 
+function defaultObservabilityService(): ObservabilityService {
+  return createObservabilityService({
+    folderRepository: createPrismaFolderRepository(),
+    fileRepository: createPrismaFileRepository(),
+  });
+}
+
 export function createApp(
   apiKeyRepository: ApiKeyRepository = createPrismaApiKeyRepository(),
   folderService: FolderService = defaultFolderService(),
   retrievalService: RetrievalService = defaultRetrievalService(),
+  observabilityService: ObservabilityService = defaultObservabilityService(),
 ) {
   const app = express();
   app.use(pinoHttp({ logger }));
@@ -54,6 +66,7 @@ export function createApp(
 
   app.use(requireApiKey, createFoldersRouter(folderService, env.GOOGLE_SERVICE_ACCOUNT_EMAIL));
   app.use(requireApiKey, createRetrievalRouter(retrievalService));
+  app.use(requireApiKey, createObservabilityRouter(observabilityService));
 
   return app;
 }

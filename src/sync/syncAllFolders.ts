@@ -1,9 +1,17 @@
 import type { EmbeddingProvider } from "../embeddings/embeddingProvider.js";
 import type { FolderRepository } from "../folders/folderRepository.js";
+import { logger } from "../lib/logger.js";
 import type { ConcurrencyLimiter } from "../scheduling/concurrencyLimiter.js";
 import { assertEmbeddingDimensionMatchesVectorStore } from "../vectorstore/assertProviderCompatibility.js";
 import type { VectorStore } from "../vectorstore/vectorStore.js";
 import type { FolderSyncer, FolderSyncSummary } from "./syncFolder.js";
+
+// A folder failing occasionally is expected (a transient Drive hiccup); a
+// folder failing this many *consecutive* times is a signal worth an
+// operator's attention. No alerting integration exists yet — this is the
+// log signal such a system would subscribe to (see M15's testing checklist
+// wording: "the log signal it would consume exists").
+const REPEATED_FAILURE_THRESHOLD = 3;
 
 export type FolderSyncOutcome =
   | { driveFolderId: string; accountId: string; ok: true; summary: FolderSyncSummary }
@@ -49,17 +57,38 @@ export function createSyncRunner(deps: SyncRunnerDeps): SyncRunner {
       const outcomes = await Promise.all(
         folders.map((folder): Promise<FolderSyncOutcome> =>
           deps.concurrencyLimiter.run(folder.accountId, async () => {
-            try {
-              const summary = await deps.folderSyncer.syncFolder(folder.accountId, folder);
-              return { driveFolderId: folder.id, accountId: folder.accountId, ok: true, summary };
-            } catch (err) {
-              return {
-                driveFolderId: folder.id,
-                accountId: folder.accountId,
-                ok: false,
-                error: err instanceof Error ? err.message : String(err),
-              };
+            const outcome = await (async (): Promise<FolderSyncOutcome> => {
+              try {
+                const summary = await deps.folderSyncer.syncFolder(folder.accountId, folder);
+                return { driveFolderId: folder.id, accountId: folder.accountId, ok: true, summary };
+              } catch (err) {
+                return {
+                  driveFolderId: folder.id,
+                  accountId: folder.accountId,
+                  ok: false,
+                  error: err instanceof Error ? err.message : String(err),
+                };
+              }
+            })();
+
+            const updated = await deps.folderRepository.recordSyncResult(
+              folder.id,
+              outcome.ok ? { ok: true } : { ok: false, error: outcome.error },
+            );
+
+            if (!outcome.ok && updated.consecutiveFailures >= REPEATED_FAILURE_THRESHOLD) {
+              logger.error(
+                {
+                  accountId: folder.accountId,
+                  driveFolderId: folder.id,
+                  consecutiveFailures: updated.consecutiveFailures,
+                  lastError: updated.lastSyncError,
+                },
+                "repeated sync failures for this folder",
+              );
             }
+
+            return outcome;
           }),
         ),
       );

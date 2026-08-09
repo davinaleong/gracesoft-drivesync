@@ -56,19 +56,31 @@ enum FolderStatus {
   NOT_ACCESSIBLE
 }
 
+enum SyncStatus {
+  SUCCESS
+  FAILED
+}
+
 // One row per (account, Google Drive folder). folderId is the raw
 // user-pasted Drive folder ID, not our own primary key — verified against
 // the shared service account's access before it's ever persisted as
 // CONNECTED (see M3's POST /folders).
 model DriveFolder {
-  id             String       @id @default(cuid())
-  accountId      String
-  account        Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  folderId       String
-  status         FolderStatus
-  connectedAt    DateTime     @default(now())
-  lastVerifiedAt DateTime     @default(now())
-  driveFiles     DriveFile[]
+  id                   String       @id @default(cuid())
+  accountId            String
+  account              Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  folderId             String
+  status               FolderStatus
+  connectedAt          DateTime     @default(now())
+  lastVerifiedAt       DateTime     @default(now())
+  // Recorded by M12's sync run after every attempt (not just verify) — what
+  // M15's /status endpoint reports and what the repeated-failure log signal
+  // (see M15) is derived from.
+  lastSyncedAt         DateTime?
+  lastSyncStatus       SyncStatus?
+  lastSyncError        String?
+  consecutiveFailures  Int          @default(0)
+  driveFiles           DriveFile[]
 
   @@unique([accountId, folderId])
   @@index([accountId])

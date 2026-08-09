@@ -78,6 +78,9 @@ function makeFakeFileRepository(seed: FileRecord[] = []): FileRepository {
     async findByFileId(accountId, fileId) {
       return [...rows.values()].find((r) => r.accountId === accountId && r.fileId === fileId) ?? null;
     },
+    async listForAccount(accountId) {
+      return [...rows.values()].filter((r) => r.accountId === accountId);
+    },
   };
 }
 
