@@ -11,6 +11,11 @@ import { createFolderService } from "./folders/folderService.js";
 import type { FolderService } from "./folders/folderService.js";
 import { createPrismaFolderRepository } from "./folders/folderRepository.js";
 import { createGoogleDriveClient } from "./drive/driveClient.js";
+import { createRetrievalRouter } from "./retrieval/retrievalRouter.js";
+import { createRetrievalService } from "./retrieval/retrievalService.js";
+import type { RetrievalService } from "./retrieval/retrievalService.js";
+import { createEmbeddingProvider } from "./embeddings/index.js";
+import { createVectorStore } from "./vectorstore/index.js";
 
 const env = loadEnv();
 
@@ -21,9 +26,17 @@ function defaultFolderService(): FolderService {
   });
 }
 
+function defaultRetrievalService(): RetrievalService {
+  return createRetrievalService({
+    embeddingProvider: createEmbeddingProvider(),
+    vectorStore: createVectorStore(),
+  });
+}
+
 export function createApp(
   apiKeyRepository: ApiKeyRepository = createPrismaApiKeyRepository(),
   folderService: FolderService = defaultFolderService(),
+  retrievalService: RetrievalService = defaultRetrievalService(),
 ) {
   const app = express();
   app.use(pinoHttp({ logger }));
@@ -40,6 +53,7 @@ export function createApp(
   });
 
   app.use(requireApiKey, createFoldersRouter(folderService, env.GOOGLE_SERVICE_ACCOUNT_EMAIL));
+  app.use(requireApiKey, createRetrievalRouter(retrievalService));
 
   return app;
 }

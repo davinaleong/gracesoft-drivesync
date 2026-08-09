@@ -95,6 +95,7 @@ export function createFolderSyncer(deps: FolderSyncDeps): FolderSyncer {
                 metadata: {
                   fileId: file.id,
                   name: file.name,
+                  text: chunk.text,
                   ...(chunk.section !== undefined ? { section: chunk.section } : {}),
                 },
               })),
