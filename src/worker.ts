@@ -51,12 +51,29 @@ const worker = new Worker(
     logger.info("sync run started");
     const summary = await syncRunner.runSync();
     const failed = summary.folders.filter((f) => !f.ok);
+    // A folder can succeed overall while still skipping individual files
+    // (unsupported type, scanned PDF, a transient error survived retries) —
+    // those failures live in each successful outcome's summary.failedFiles
+    // and are otherwise invisible in the logs.
+    const filesFailedWithinSuccessfulFolders = summary.folders.flatMap((f) =>
+      f.ok ? f.summary.failedFiles.map((file) => ({ accountId: f.accountId, driveFolderId: f.driveFolderId, ...file })) : [],
+    );
     logger.info(
-      { folderCount: summary.folders.length, failedFolderCount: failed.length },
+      {
+        folderCount: summary.folders.length,
+        failedFolderCount: failed.length,
+        failedFileCount: filesFailedWithinSuccessfulFolders.length,
+      },
       "sync run completed",
     );
     if (failed.length > 0) {
       logger.warn({ failed }, "one or more folders failed to sync this run");
+    }
+    if (filesFailedWithinSuccessfulFolders.length > 0) {
+      logger.warn(
+        { files: filesFailedWithinSuccessfulFolders },
+        "one or more files were skipped during an otherwise-successful sync",
+      );
     }
     return summary;
   },
