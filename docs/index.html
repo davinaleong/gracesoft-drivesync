@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GraceSoft DriveSync — Documentation</title>
+<meta name="description" content="Full reference documentation for GraceSoft DriveSync: architecture, REST/MCP API, pluggable providers, and deployment." />
+<style>
+  :root {
+    --accent: #a8672a;
+    --accent-strong: #7c4b1c;
+    --accent-tint: #f0e2ce;
+    --bg: #f6f5f1;
+    --surface: #ffffff;
+    --ink: #201d18;
+    --muted: #5b5750;
+    --faint: #8a857b;
+    --border: #e2ded4;
+    --code-bg: #eeebe3;
+    --success: #3f8f5e;
+    --warning: #c0632e;
+    --critical: #b4402f;
+    --shadow: 0 1px 2px rgba(32, 29, 24, 0.06);
+
+    --mono: ui-monospace, "SF Mono", "IBM Plex Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+    --serif: Charter, "Iowan Old Style", "Palatino Linotype", Georgia, "Times New Roman", serif;
+
+    --content-max: 46rem;
+    --wide-max: 60rem;
+  }
+
+  :root[data-theme="dark"] {
+    --accent: #d68a45;
+    --accent-strong: #f0a763;
+    --accent-tint: #3a2c1c;
+    --bg: #171310;
+    --surface: #1f1a15;
+    --ink: #f0ede6;
+    --muted: #a79e8f;
+    --faint: #7d7568;
+    --border: #342d24;
+    --code-bg: #241e17;
+    --success: #5cb37f;
+    --warning: #d98552;
+    --critical: #d1655a;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --accent: #d68a45;
+      --accent-strong: #f0a763;
+      --accent-tint: #3a2c1c;
+      --bg: #171310;
+      --surface: #1f1a15;
+      --ink: #f0ede6;
+      --muted: #a79e8f;
+      --faint: #7d7568;
+      --border: #342d24;
+      --code-bg: #241e17;
+      --success: #5cb37f;
+      --warning: #d98552;
+      --critical: #d1655a;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--accent-strong); text-decoration-thickness: 1px; }
+  a:hover { color: var(--accent); }
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--mono);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    color: var(--ink);
+  }
+
+  code, pre, kbd {
+    font-family: var(--mono);
+    font-size: 0.88em;
+  }
+
+  p, li { max-width: 100%; }
+
+  .prose p, .prose li { max-width: var(--content-max); }
+
+  /* ---- layout shell ---- */
+
+  .shell {
+    display: grid;
+    grid-template-columns: 17rem minmax(0, 1fr);
+    max-width: 76rem;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 2rem 1.5rem 2rem 2rem;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+  }
+
+  @media (max-width: 900px) {
+    .sidebar {
+      position: static;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      padding: 1.5rem;
+    }
+  }
+
+  .brand {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .brand-mark {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: -0.02em;
+  }
+
+  .brand-mark .dot { color: var(--accent); }
+
+  .brand-tag {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--muted);
+    font-size: 0.92rem;
+  }
+
+  .navgroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .navgroup-label {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--faint);
+    margin: 0 0 0.4rem 0.1rem;
+  }
+
+  .navlink {
+    font-family: var(--mono);
+    font-size: 0.84rem;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 0.32rem 0.5rem;
+    border-radius: 3px;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .navlink:hover { color: var(--ink); background: var(--accent-tint); }
+  .navlink.active { color: var(--accent-strong); background: var(--accent-tint); font-weight: 600; }
+
+  .sidebar-foot {
+    margin-top: auto;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--faint);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .sidebar-foot a { color: var(--faint); }
+  .sidebar-foot a:hover { color: var(--accent-strong); }
+
+  /* ---- main content ---- */
+
+  main {
+    padding: 3rem clamp(1.25rem, 4vw, 4rem) 6rem;
+    min-width: 0;
+  }
+
+  .masthead {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2.5rem;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent-strong);
+  }
+
+  .masthead h1 {
+    font-size: clamp(1.6rem, 3.2vw, 2.2rem);
+    margin: 0;
+  }
+
+  .masthead .lede {
+    font-family: var(--serif);
+    font-size: 1.08rem;
+    color: var(--muted);
+    max-width: var(--content-max);
+    margin: 0;
+  }
+
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    padding: 0.25rem 0.55rem;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--muted);
+    background: var(--surface);
+  }
+
+  section {
+    margin-bottom: 3.25rem;
+    scroll-margin-top: 1.5rem;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 1.1rem;
+    flex-wrap: wrap;
+  }
+
+  .section-path {
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    color: var(--faint);
+  }
+
+  section h2 {
+    font-size: 1.35rem;
+    margin: 0;
+  }
+
+  section h3 {
+    font-size: 1.05rem;
+    margin: 2rem 0 0.75rem;
+  }
+
+  .prose p { margin: 0 0 1rem; }
+  .prose ul, .prose ol { margin: 0 0 1rem; padding-left: 1.4rem; max-width: var(--content-max); }
+  .prose li { margin-bottom: 0.4rem; }
+  .prose strong { color: var(--ink); }
+
+  .callout {
+    border-left: 3px solid var(--warning);
+    background: var(--code-bg);
+    padding: 0.9rem 1.1rem;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.94rem;
+    max-width: var(--wide-max);
+    margin: 1.25rem 0;
+  }
+
+  .callout.critical { border-left-color: var(--critical); }
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--warning);
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+  .callout.critical .callout-label { color: var(--critical); }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.9rem 1.1rem;
+    overflow-x: auto;
+    max-width: var(--wide-max);
+    line-height: 1.55;
+    margin: 0 0 1.25rem;
+  }
+
+  code:not(pre code) {
+    background: var(--code-bg);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+  }
+
+  .table-wrap { overflow-x: auto; max-width: var(--wide-max); margin: 0 0 1.5rem; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.92rem;
+    min-width: 32rem;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 0.55rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  th {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--faint);
+    font-weight: 600;
+  }
+
+  td code { white-space: nowrap; }
+  td.num { font-variant-numeric: tabular-nums; }
+
+  .pill {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    display: inline-block;
+    font-weight: 600;
+  }
+  .pill.get { background: #d9e9df; color: #1f5a3a; }
+  .pill.post { background: #e6dbc9; color: var(--accent-strong); }
+  :root[data-theme="dark"] .pill.get, @media (prefers-color-scheme: dark) { }
+  .pill.get { background: color-mix(in srgb, var(--success) 22%, transparent); color: var(--success); }
+  .pill.post { background: color-mix(in srgb, var(--accent) 26%, transparent); color: var(--accent-strong); }
+
+  .status-dot {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    margin-right: 0.4rem;
+    vertical-align: middle;
+  }
+  .status-dot.ok { background: var(--success); }
+  .status-dot.warn { background: var(--warning); }
+  .status-dot.bad { background: var(--critical); }
+
+  /* ---- pipeline diagram ---- */
+
+  .pipeline {
+    max-width: var(--wide-max);
+    margin: 0.5rem 0 1.75rem;
+  }
+  .pipeline svg { width: 100%; height: auto; display: block; }
+  .pipeline text {
+    font-family: var(--mono);
+    fill: var(--ink);
+  }
+  .pipeline .stage-label { font-size: 12.5px; font-weight: 600; }
+  .pipeline .stage-tag { font-size: 10px; fill: var(--muted); }
+  .pipeline .stage-box { fill: var(--surface); stroke: var(--border); stroke-width: 1.2; }
+  .pipeline .stage-box.accent { stroke: var(--accent); }
+  .pipeline .arrow { stroke: var(--faint); stroke-width: 1.4; fill: none; }
+  .pipeline .arrowhead { fill: var(--faint); }
+  .pipeline .branch-label { font-size: 10px; fill: var(--accent-strong); }
+
+  /* ---- module cards ---- */
+
+  .module-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 1rem;
+    max-width: var(--wide-max);
+    margin-bottom: 1.5rem;
+  }
+
+  .module-card {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 5px;
+    padding: 1.1rem 1.2rem;
+    box-shadow: var(--shadow);
+  }
+
+  .module-card h4 {
+    margin: 0 0 0.3rem;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .module-kind {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--faint);
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .module-card p { font-size: 0.9rem; color: var(--muted); margin: 0; }
+
+  /* ---- footer ---- */
+
+  .page-foot {
+    border-top: 1px solid var(--border);
+    padding-top: 1.5rem;
+    margin-top: 4rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--faint);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .skip-link {
+    position: absolute;
+    left: -999px;
+  }
+  .skip-link:focus {
+    left: 1rem;
+    top: 1rem;
+    background: var(--surface);
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    z-index: 10;
+  }
+</style>
+</head>
+<body>
+<a href="#main" class="skip-link">Skip to content</a>
+
+<div class="shell">
+  <nav class="sidebar" aria-label="Documentation sections">
+    <div class="brand">
+      <span class="brand-mark">gracesoft<span class="dot">/</span>drivesync</span>
+      <span class="brand-tag">Drive → chunks → vectors → answers</span>
+    </div>
+
+    <div class="navgroup">
+      <span class="navgroup-label">Start here</span>
+      <a class="navlink" href="#overview">Overview</a>
+      <a class="navlink" href="#quickstart">Quickstart</a>
+    </div>
+
+    <div class="navgroup">
+      <span class="navgroup-label">How it works</span>
+      <a class="navlink" href="#architecture">Architecture</a>
+      <a class="navlink" href="#providers">Pluggable providers</a>
+      <a class="navlink" href="#multitenancy">Multi-tenancy</a>
+    </div>
+
+    <div class="navgroup">
+      <span class="navgroup-label">Reference</span>
+      <a class="navlink" href="#rest-api">REST API</a>
+      <a class="navlink" href="#mcp">MCP tools</a>
+      <a class="navlink" href="#env-vars">Environment variables</a>
+    </div>
+
+    <div class="navgroup">
+      <span class="navgroup-label">Operating it</span>
+      <a class="navlink" href="#deployment">Deployment</a>
+      <a class="navlink" href="#contributing">Contributing &amp; adapters</a>
+    </div>
+
+    <div class="sidebar-foot">
+      <a href="https://github.com/davinaleong/gracesoft-drivesync">github.com/davinaleong/gracesoft-drivesync</a>
+      <span>MIT licensed</span>
+    </div>
+  </nav>
+
+  <main id="main">
+    <header class="masthead">
+      <span class="eyebrow">Reference documentation</span>
+      <h1>GraceSoft DriveSync</h1>
+      <p class="lede">Syncs Google Drive folders into a vector store for retrieval-augmented generation, and serves that index over REST and MCP. Multi-tenant by construction — every account gets its own API keys and its own isolated slice of the index.</p>
+      <div class="badges">
+        <span class="badge">Node 20+</span>
+        <span class="badge">TypeScript</span>
+        <span class="badge">MIT</span>
+        <span class="badge">Postgres · Redis · BullMQ</span>
+      </div>
+    </header>
+
+    <section id="overview">
+      <div class="section-head">
+        <h2>Overview</h2>
+        <span class="section-path">#overview</span>
+      </div>
+      <div class="prose">
+        <p>Paste a Drive folder ID, share it with a service account, and DriveSync keeps it in sync on a schedule: listing what changed, extracting text, chunking it, embedding it, and writing it into a vector store — ready to query over REST or hand to any MCP-compatible client.</p>
+        <ul>
+          <li><strong>Drive folder sync</strong> — folder access is verified before it's ever marked connected; a folder that's later unshared surfaces as <code>NOT_ACCESSIBLE</code>, not a silent stale success.</li>
+          <li><strong>Extraction</strong> — Google Docs, Sheets, Slides, and PDFs with a text layer, to plain text.</li>
+          <li><strong>Chunking</strong> — token-budgeted chunks with overlap, using the same tokenizer the reference embedding provider uses, so measured chunk sizes are the sizes that provider actually sees.</li>
+          <li><strong>Pluggable providers</strong> — embeddings and vector storage are interfaces, not hardcoded SDK calls. OpenAI and Pinecone ship as the reference adapters.</li>
+          <li><strong>Dedup &amp; cleanup</strong> — a content-hash check skips re-embedding unchanged files; stale vectors are cleaned up when a file shrinks or disappears.</li>
+          <li><strong>Retrieval with attribution</strong> — results carry chunk text and source (file, section), not just an ID and a score.</li>
+          <li><strong>Observability</strong> — per-folder sync health and account-wide index totals, both scoped to the caller.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="quickstart">
+      <div class="section-head">
+        <h2>Quickstart</h2>
+        <span class="section-path">#quickstart</span>
+      </div>
+      <div class="prose">
+        <p>Requires Node 20+, a Postgres database, and a Redis instance. <code>docker-compose.yml</code> provides both locally.</p>
+        <pre><code>git clone https://github.com/davinaleong/gracesoft-drivesync.git
+cd gracesoft-drivesync
+npm install
+cp .env.example .env
+# fill in .env — see Environment variables below
+docker compose up -d
+npm run prisma:migrate
+npm run account:create -- "My Company"
+npm run api-key:issue -- &lt;accountId&gt; "first key"   # prints the raw key once</code></pre>
+        <p>Then, in separate terminals:</p>
+        <pre><code>npm run dev      # REST API on PORT (default 3000)
+npm run worker   # scheduled sync job
+npm run mcp      # MCP server on MCP_SERVER_PORT (default 3001)</code></pre>
+        <p>Share a real Drive folder with <code>GOOGLE_SERVICE_ACCOUNT_EMAIL</code>, then connect it:</p>
+        <pre><code>curl -X POST http://localhost:3000/folders \
+  -H "Authorization: Bearer &lt;your-api-key&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{"folderId": "&lt;google-drive-folder-id&gt;"}'</code></pre>
+        <p>The worker picks it up on the next scheduled run (<code>SYNC_CRON</code>, every 15 minutes by default). Once synced:</p>
+        <pre><code>curl -X POST http://localhost:3000/query \
+  -H "Authorization: Bearer &lt;your-api-key&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "what does this folder say about pricing?"}'</code></pre>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <div class="section-head">
+        <h2>Architecture</h2>
+        <span class="section-path">#architecture</span>
+      </div>
+      <div class="prose">
+        <p>Each stage below was built and unit-tested independently — several as pure functions, before the state they'd eventually consume existed at all.</p>
+      </div>
+
+      <div class="pipeline" role="img" aria-label="Pipeline: Drive listing flows into change detection, then extraction, chunking, an embedding provider, and a vector store; retrieval and MCP search both read from the vector store.">
+        <svg viewBox="0 0 1080 300" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L8,4 L0,8 z" class="arrowhead"></path>
+            </marker>
+          </defs>
+
+          <!-- top row: main pipeline -->
+          <g>
+            <rect x="10" y="40" width="150" height="56" rx="4" class="stage-box"></rect>
+            <text x="85" y="63" text-anchor="middle" class="stage-label">Drive listing</text>
+            <text x="85" y="80" text-anchor="middle" class="stage-tag">DriveClient</text>
+          </g>
+
+          <line x1="160" y1="68" x2="200" y2="68" class="arrow" marker-end="url(#arrow)"></line>
+
+          <g>
+            <rect x="200" y="40" width="150" height="56" rx="4" class="stage-box accent"></rect>
+            <text x="275" y="63" text-anchor="middle" class="stage-label">Change detection</text>
+            <text x="275" y="80" text-anchor="middle" class="stage-tag">detectChanges — M4</text>
+          </g>
+
+          <line x1="350" y1="68" x2="390" y2="68" class="arrow" marker-end="url(#arrow)"></line>
+
+          <g>
+            <rect x="390" y="40" width="150" height="56" rx="4" class="stage-box"></rect>
+            <text x="465" y="63" text-anchor="middle" class="stage-label">Extraction</text>
+            <text x="465" y="80" text-anchor="middle" class="stage-tag">TextExtractor — M5</text>
+          </g>
+
+          <line x1="540" y1="68" x2="580" y2="68" class="arrow" marker-end="url(#arrow)"></line>
+
+          <g>
+            <rect x="580" y="40" width="150" height="56" rx="4" class="stage-box"></rect>
+            <text x="655" y="63" text-anchor="middle" class="stage-label">Chunking</text>
+            <text x="655" y="80" text-anchor="middle" class="stage-tag">chunkText — M6</text>
+          </g>
+
+          <line x1="730" y1="68" x2="770" y2="68" class="arrow" marker-end="url(#arrow)"></line>
+
+          <g>
+            <rect x="770" y="40" width="150" height="56" rx="4" class="stage-box accent"></rect>
+            <text x="845" y="58" text-anchor="middle" class="stage-label">Embedding</text>
+            <text x="845" y="73" text-anchor="middle" class="stage-tag">EmbeddingProvider</text>
+            <text x="845" y="87" text-anchor="middle" class="stage-tag">pluggable — M7</text>
+          </g>
+
+          <line x1="920" y1="68" x2="960" y2="68" class="arrow" marker-end="url(#arrow)"></line>
+
+          <g>
+            <rect x="960" y="40" width="110" height="56" rx="4" class="stage-box accent"></rect>
+            <text x="1015" y="58" text-anchor="middle" class="stage-label">Vector</text>
+            <text x="1015" y="73" text-anchor="middle" class="stage-label">store</text>
+            <text x="1015" y="87" text-anchor="middle" class="stage-tag">pluggable — M8</text>
+          </g>
+
+          <!-- down from vector store to consumers -->
+          <line x1="1015" y1="96" x2="1015" y2="150" class="arrow"></line>
+          <line x1="845" y1="150" x2="1015" y2="150" class="arrow" marker-end="url(#arrow)"></line>
+          <line x1="845" y1="150" x2="845" y2="96" class="arrow"></line>
+
+          <text x="930" y="140" text-anchor="middle" class="branch-label">query() / fetch()</text>
+
+          <g>
+            <rect x="705" y="170" width="150" height="52" rx="4" class="stage-box"></rect>
+            <text x="780" y="192" text-anchor="middle" class="stage-label">REST /query</text>
+            <text x="780" y="207" text-anchor="middle" class="stage-tag">RetrievalService</text>
+          </g>
+
+          <g>
+            <rect x="895" y="170" width="150" height="52" rx="4" class="stage-box"></rect>
+            <text x="970" y="192" text-anchor="middle" class="stage-label">MCP search</text>
+            <text x="970" y="207" text-anchor="middle" class="stage-tag">fetch_document</text>
+          </g>
+
+          <line x1="845" y1="150" x2="780" y2="170" class="arrow" marker-end="url(#arrow)"></line>
+          <line x1="1015" y1="150" x2="970" y2="170" class="arrow" marker-end="url(#arrow)"></line>
+
+          <!-- bottom: scheduling wraps the whole top row -->
+          <rect x="4" y="245" width="1072" height="40" rx="4" fill="none" stroke-dasharray="4 3" class="stage-box"></rect>
+          <text x="540" y="269" text-anchor="middle" class="stage-tag">BullMQ worker on SYNC_CRON — iterates every connected folder, per-folder failure isolation, per-account rate limiting (M12)</text>
+        </svg>
+      </div>
+
+      <div class="prose">
+        <h3>Dedup &amp; cleanup</h3>
+        <p>Before re-embedding a changed file, its content is hashed; an unchanged hash skips straight to updating the tracked <code>modifiedTime</code> without touching the vector store. When a file is deleted or shrinks to fewer chunks than it had before, the trailing stale vector IDs are computed and removed — the shrink case is the one that's easy to miss if cleanup is only wired to full-delete events.</p>
+        <h3>Design pattern used throughout</h3>
+        <p>Nearly every external dependency here — Prisma, the Drive API, OpenAI, Pinecone, Redis — sits behind an interface with an injectable factory: <code>create&lt;Thing&gt;(deps)</code>. Business logic is tested against fakes; only a thin wrapper around the real SDK ever touches a real network call.</p>
+      </div>
+    </section>
+
+    <section id="providers">
+      <div class="section-head">
+        <h2>Pluggable providers</h2>
+        <span class="section-path">#providers</span>
+      </div>
+      <div class="prose">
+        <p><code>EmbeddingProvider</code> and <code>VectorStore</code> are interfaces the pipeline talks to — never a specific SDK directly. Two adapters ship as reference implementations.</p>
+      </div>
+
+      <div class="module-grid">
+        <div class="module-card">
+          <span class="module-kind">EmbeddingProvider · attached</span>
+          <h4>OpenAI</h4>
+          <p><code>text-embedding-3-small</code> by default (1536 dims). Batched, with retry/backoff on 429/5xx. Dimension is looked up from a fixed table — an unrecognized model fails at startup, not mid-sync.</p>
+        </div>
+        <div class="module-card">
+          <span class="module-kind">VectorStore · attached</span>
+          <h4>Pinecone</h4>
+          <p>Per-account namespace, stable <code>{fileId}-{chunkIndex}</code> vector IDs. The index must already exist — this project never creates one for you.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <div class="callout critical">
+          <span class="callout-label">Dimension compatibility — check before every deploy</span>
+          Embedding dimension is fixed per model and baked into a vector index at creation time. There is no partial or live migration between mismatched dimensions — <code>assertEmbeddingDimensionMatchesVectorStore</code> fails every sync run closed rather than writing wrong-dimension vectors. A real deployment hit this: <code>text-embedding-3-small</code> (1536 dims) configured against a Pinecone index created at 512 dims. Every run failed correctly — but that also means zero syncing happens until the mismatch is fixed.
+        </div>
+        <p>Swapping either provider on a deployment with existing data always means a full resync — there's no in-place migration, by design. See <a href="#contributing">Adding a provider</a> for implementing a different one.</p>
+      </div>
+    </section>
+
+    <section id="multitenancy">
+      <div class="section-head">
+        <h2>Multi-tenancy</h2>
+        <span class="section-path">#multitenancy</span>
+      </div>
+      <div class="prose">
+        <p>Every tenant is an <strong>Account</strong>, provisioned by an operator (<code>npm run account:create</code>) rather than self-service — this service shares one Google service-account identity across every tenant for Drive access, so an open signup endpoint would let anyone consume that shared quota.</p>
+        <p>An account authenticates with an API key (<code>Authorization: Bearer dsk_...</code>). The key resolves to an account, and every downstream operation is scoped to that account's ID. In the vector store, the account ID <em>is</em> the namespace — there is no shared namespace an account could accidentally read from or write into another tenant's data.</p>
+      </div>
+    </section>
+
+    <section id="rest-api">
+      <div class="section-head">
+        <h2>REST API</h2>
+        <span class="section-path">#rest-api</span>
+      </div>
+      <div class="prose">
+        <p>Every endpoint except <code>GET /health</code> requires <code>Authorization: Bearer &lt;api-key&gt;</code>. A missing, malformed, unknown, or revoked key all return the identical <code>401 {"error": "unauthorized"}</code> — the response never signals <em>why</em> a key was rejected.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Method</th><th>Path</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="pill get">GET</span></td><td><code>/health</code></td><td>Unauthenticated liveness check</td></tr>
+            <tr><td><span class="pill get">GET</span></td><td><code>/me</code></td><td>Resolve the caller's account</td></tr>
+            <tr><td><span class="pill post">POST</span></td><td><code>/folders</code></td><td>Connect a Drive folder (verified before persisting)</td></tr>
+            <tr><td><span class="pill get">GET</span></td><td><code>/folders</code></td><td>List the caller's connected folders</td></tr>
+            <tr><td><span class="pill post">POST</span></td><td><code>/folders/:id/verify</code></td><td>Re-check an existing folder's access</td></tr>
+            <tr><td><span class="pill post">POST</span></td><td><code>/query</code></td><td>Retrieval — chunk text plus attribution</td></tr>
+            <tr><td><span class="pill get">GET</span></td><td><code>/status</code></td><td>Per-folder sync health</td></tr>
+            <tr><td><span class="pill get">GET</span></td><td><code>/audit</code></td><td>Account-wide index totals</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="prose">
+        <h3>POST /query</h3>
+        <p>Embeds the query, searches the caller's own account namespace, returns chunk text plus attribution.</p>
+        <pre><code>// Request
+{ "query": "what does this say about pricing?", "topK": 5 }  // topK optional, default 5, max 50
+
+// Response
+{
+  "results": [
+    { "text": "...", "score": 0.87, "fileId": "...", "fileName": "pricing.docx", "section": "Enterprise tier" }
+  ]
+}</code></pre>
+
+        <h3>GET /status</h3>
+        <pre><code>{
+  "folders": [
+    {
+      "driveFolderId": "...", "folderId": "...", "status": "CONNECTED",
+      "lastSyncedAt": "2026-01-01T00:00:00.000Z", "lastSyncStatus": "SUCCESS",
+      "lastSyncError": null, "consecutiveFailures": 0, "fileCount": 42
+    }
+  ]
+}</code></pre>
+
+        <h3>GET /audit</h3>
+        <pre><code>{
+  "totalFiles": 42, "totalChunks": 310,
+  "folders": [ { "driveFolderId": "...", "folderId": "...", "fileCount": 42, "chunkCount": 310 } ]
+}</code></pre>
+
+        <h3>POST /folders/:id/verify</h3>
+        <p>Returns <code>200</code> either way — the verify request itself succeeded even when access was revoked:</p>
+        <pre><code>// still accessible
+{ "folder": { "...": "...", "status": "CONNECTED" } }
+
+// access revoked
+{ "folder": { "...": "...", "status": "NOT_ACCESSIBLE" }, "error": "..." }</code></pre>
+      </div>
+    </section>
+
+    <section id="mcp">
+      <div class="section-head">
+        <h2>MCP tools</h2>
+        <span class="section-path">#mcp</span>
+      </div>
+      <div class="prose">
+        <p>Served over streamable HTTP at <code>POST /mcp</code>, stateless — no session state between calls. Authenticated the same way as REST: <code>Authorization: Bearer &lt;api-key&gt;</code> on the HTTP request, resolved by the identical <code>requireApiKey</code> middleware the REST API uses, not a parallel implementation.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tool</th><th>Parameters</th><th>Returns</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>search</code></td>
+              <td><code>query</code> (string, required)<br /><code>topK</code> (number, max 50, default 5)</td>
+              <td>Same shape as <code>/query</code>'s <code>results</code>, as JSON text</td>
+            </tr>
+            <tr>
+              <td><code>fetch_document</code></td>
+              <td><code>fileId</code> (string, required — from a prior <code>search</code> result)</td>
+              <td><code>{ fileId, fileName, text }</code> — the reconstructed full document, or an <code>isError</code> result if not found or not the caller's</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="env-vars">
+      <div class="section-head">
+        <h2>Environment variables</h2>
+        <span class="section-path">#env-vars</span>
+      </div>
+      <div class="prose">
+        <p>Validated at startup for all three processes — a missing or malformed required var fails immediately, naming the variable, before anything half-starts.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Variable</th><th>Required</th><th>Default</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>NODE_ENV</code></td><td>No</td><td><code>development</code></td><td></td></tr>
+            <tr><td><code>PORT</code></td><td>No</td><td><code>3000</code></td><td>API server only</td></tr>
+            <tr><td><code>LOG_LEVEL</code></td><td>No</td><td><code>info</code></td><td></td></tr>
+            <tr><td><code>DATABASE_URL</code></td><td>Yes</td><td>—</td><td>Postgres connection string</td></tr>
+            <tr><td><code>REDIS_URL</code></td><td>Yes</td><td>—</td><td>BullMQ's queue backend</td></tr>
+            <tr><td><code>API_KEY_PEPPER</code></td><td>Yes</td><td>—</td><td>Rotating invalidates every issued key</td></tr>
+            <tr><td><code>GOOGLE_SERVICE_ACCOUNT_EMAIL</code></td><td>Yes</td><td>—</td><td>Shared across all tenants</td></tr>
+            <tr><td><code>GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY</code></td><td>Yes</td><td>—</td><td>Keep <code>\n</code> sequences literal</td></tr>
+            <tr><td><code>EMBEDDING_PROVIDER</code></td><td>No</td><td><code>openai</code></td><td>Config-driven registry</td></tr>
+            <tr><td><code>OPENAI_API_KEY</code></td><td>Yes*</td><td>—</td><td>*when <code>EMBEDDING_PROVIDER=openai</code></td></tr>
+            <tr><td><code>OPENAI_EMBEDDING_MODEL</code></td><td>No</td><td><code>text-embedding-3-small</code></td><td>Fixed dimension per model</td></tr>
+            <tr><td><code>VECTOR_STORE</code></td><td>No</td><td><code>pinecone</code></td><td>Config-driven registry</td></tr>
+            <tr><td><code>PINECONE_API_KEY</code></td><td>Yes*</td><td>—</td><td>*when <code>VECTOR_STORE=pinecone</code></td></tr>
+            <tr><td><code>PINECONE_INDEX_NAME</code></td><td>No</td><td><code>drivesync</code></td><td>Must already exist — see dimension check above</td></tr>
+            <tr><td><code>SYNC_CRON</code></td><td>No</td><td><code>*/15 * * * *</code></td><td>Worker only</td></tr>
+            <tr><td><code>DRIVE_RATE_LIMIT_PER_ACCOUNT</code></td><td>No</td><td><code>5</code></td><td>Concurrent folder syncs per account</td></tr>
+            <tr><td><code>MCP_SERVER_PORT</code></td><td>No</td><td><code>3001</code></td><td>MCP server only</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="deployment">
+      <div class="section-head">
+        <h2>Deployment</h2>
+        <span class="section-path">#deployment</span>
+      </div>
+      <div class="prose">
+        <p>One Docker image, three independently-run processes — not three images. The current <code>Dockerfile</code> only defines a start command for the API server; the worker and MCP server run from the same image with an overridden command.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Process</th><th>Entry point</th><th>Needs</th><th>Public?</th></tr></thead>
+          <tbody>
+            <tr><td>API server</td><td><code>node dist/server.js</code></td><td>Postgres, Pinecone, OpenAI</td><td>Yes</td></tr>
+            <tr><td>Sync worker</td><td><code>node dist/worker.js</code></td><td>Postgres, Redis, Drive, Pinecone, OpenAI</td><td>No</td></tr>
+            <tr><td>MCP server</td><td><code>node dist/mcp.js</code></td><td>Postgres, Pinecone, OpenAI</td><td>Yes</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="prose">
+        <pre><code>npm run prisma:deploy   # `prisma migrate deploy` — apply pending migrations only, never generates one</code></pre>
+        <p>Run once per deploy, before starting any process, against the target environment's real database. Never run <code>prisma migrate dev</code> against staging or production — it's a local-development command that assumes an ephemeral, disposable database.</p>
+
+        <div class="callout">
+          <span class="callout-label">Known gap — concurrent runs</span>
+          A single worker process never runs two jobs at once, and BullMQ's own per-job lock stops the <em>same</em> scheduled job being double-processed across multiple worker processes. There is no cross-process lock yet preventing two <em>different</em> jobs (a scheduled tick and a manual trigger, on separate processes) from processing the same folder concurrently. Run exactly one worker process until this is closed.
+        </div>
+
+        <p>Full runbook — process topology, staging/production separation, post-deploy smoke test, rollback: <a href="deployment-runbook.md">deployment-runbook.md</a>.</p>
+      </div>
+    </section>
+
+    <section id="contributing">
+      <div class="section-head">
+        <h2>Contributing &amp; adapters</h2>
+        <span class="section-path">#contributing</span>
+      </div>
+      <div class="prose">
+        <p>The main contribution surface this project is built around is a new <code>EmbeddingProvider</code> or <code>VectorStore</code> adapter:</p>
+        <ol>
+          <li>Implement the interface — see <code>openaiEmbeddingProvider.ts</code> / <code>pineconeVectorStore.ts</code> for the reference shape (an injected thin client wrapping the real SDK, with retry/batching logic around it).</li>
+          <li>Run the shared contract test suite against your adapter (<code>defineEmbeddingProviderContractTests</code> / <code>defineVectorStoreContractTests</code>) — <strong>required</strong>, not optional, before a new-adapter PR merges. It's what catches an adapter that compiles but silently breaks a guarantee like namespace isolation.</li>
+          <li>Register it in the config-driven factory — one <code>case</code> added to a <code>switch</code>, no plugin-loading machinery.</li>
+        </ol>
+        <p>Full guide: <a href="adding-a-provider.md">adding-a-provider.md</a>. Development setup and code-style conventions: <a href="../CONTRIBUTING.md">CONTRIBUTING.md</a>. Reporting a vulnerability: <a href="../SECURITY.md">SECURITY.md</a>.</p>
+      </div>
+    </section>
+
+    <footer class="page-foot">
+      <span>GraceSoft DriveSync — MIT License</span>
+      <span>Docs generated from the project's own architecture, API, and deployment notes</span>
+    </footer>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll(".navlink"));
+    var sections = links
+      .map(function (l) { return document.querySelector(l.getAttribute("href")); })
+      .filter(Boolean);
+
+    if (!("IntersectionObserver" in window) || sections.length === 0) return;
+
+    var byId = {};
+    links.forEach(function (l) { byId[l.getAttribute("href").slice(1)] = l; });
+
+    var observer = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          var link = byId[entry.target.id];
+          if (!link) return;
+          if (entry.isIntersecting) {
+            links.forEach(function (l) { l.classList.remove("active"); });
+            link.classList.add("active");
+          }
+        });
+      },
+      { rootMargin: "-10% 0px -70% 0px", threshold: 0 }
+    );
+
+    sections.forEach(function (s) { observer.observe(s); });
+  })();
+</script>
+</body>
+</html>

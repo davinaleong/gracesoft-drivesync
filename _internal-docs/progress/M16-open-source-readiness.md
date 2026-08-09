@@ -33,3 +33,12 @@ Status: **Done**
 ## Next
 
 M17 — Testing & CI: unit + integration coverage, full lint/typecheck/test/build pipeline, clean-room CI check (much of this is already true in practice — see this milestone's CI-history verification above — M17's job is to confirm that's real coverage, not coincidence, and close any remaining gaps).
+
+## Addendum (post-M18): full HTML documentation page
+
+Explicitly requested by the user after M17/M18 landed, revisiting the "docs is Markdown-only, not a generated site" decision above — with a single concrete page requested rather than a speculative future need, the calculus changed.
+
+- `docs/index.html` — a self-contained, standalone HTML page (no build step, no external fonts/scripts/CDN dependencies) consolidating `architecture.md`, `api-reference.md`, `adding-a-provider.md`, and `deployment-runbook.md` into one browsable reference with a sticky sidebar nav, scroll-spy active-section highlighting, an inline SVG pipeline diagram, and full light/dark theme support. Content is drawn directly from the existing Markdown docs and real router/schema code — nothing fabricated for the page.
+- `README.md` — added CI/license/Node badges, an "At a glance" summary table (stack, attached modules, multi-tenancy, process topology, build status) right under the tagline, and promoted the new HTML page to the top of the Docs list.
+- **Decision**: this is still a single static file, not a generated site with its own toolchain — the "no site generator for a speculative need" reasoning above still holds; what changed is that a concrete page was actually requested, so building the one file that was asked for isn't speculative.
+- **Verified**: rendered in-browser in both light and dark color schemes via the Browser pane (not just written and assumed correct) — checked the masthead, the sidebar/nav, the inline SVG pipeline diagram, code blocks, and the REST API table's GET/POST pills in each theme.

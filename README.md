@@ -1,6 +1,23 @@
 # GraceSoft DriveSync
 
+[![CI](https://github.com/davinaleong/gracesoft-drivesync/actions/workflows/ci.yml/badge.svg)](https://github.com/davinaleong/gracesoft-drivesync/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-8a672a.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-20%2B-8a672a.svg)](package.json)
+
 Syncs Google Drive folders into a vector store for retrieval-augmented generation (RAG), and exposes that index over a REST API and an [MCP](https://modelcontextprotocol.io) server. Multi-tenant from the ground up: each connected account gets its own API keys and its own isolated slice of the vector store — never another account's data, even on a shared index.
+
+**📖 [Full documentation](docs/index.html)** — architecture, API reference, provider setup, and deployment in one page.
+
+### At a glance
+
+| | |
+|---|---|
+| **Does** | Drive folder → extraction → chunking → embeddings → vector store → REST/MCP retrieval |
+| **Stack** | Node 20+/TypeScript · Postgres · Redis · BullMQ |
+| **Pluggable modules attached** | Embeddings: **OpenAI** · Vector store: **Pinecone** (swap either — see [Adding a provider](docs/adding-a-provider.md)) |
+| **Multi-tenant** | Per-account API keys; per-account vector namespace, never shared |
+| **Processes** | `server` (REST), `worker` (scheduled sync), `mcp` (MCP tools) — one image, three start commands |
+| **Build status** | 17/18 milestones complete — deploy runbook written, hosting target not yet chosen ([M18](_internal-docs/01-milestone-checklist.md)) |
 
 ## Features
 
@@ -94,6 +111,7 @@ CI (`.github/workflows/ci.yml`) runs all four against fresh Postgres/Redis servi
 
 ## Docs
 
+- **[Full documentation](docs/index.html)** — everything below, consolidated into one browsable page (architecture diagram, REST/MCP reference, env var table, provider setup, deployment). Open it directly in a browser.
 - [Adding a provider](docs/adding-a-provider.md) — implement `EmbeddingProvider` or `VectorStore` for a different embedding API or vector database.
 - [Architecture](docs/architecture.md) — the pipeline in more detail, and the design decisions behind the interface boundaries.
 - [API reference](docs/api-reference.md) — REST endpoints and MCP tools.
