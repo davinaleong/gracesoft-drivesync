@@ -41,6 +41,9 @@ function makeInMemoryRepository(): FolderRepository {
     async listForAccount(accountId) {
       return [...rows.values()].filter((r) => r.accountId === accountId);
     },
+    async listAllConnected() {
+      return [...rows.values()].filter((r) => r.status === "CONNECTED");
+    },
   };
 }
 

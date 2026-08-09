@@ -120,7 +120,7 @@ Covers the v1-carried-forward pipeline plus everything new in v2 (own auth, mult
 - [x] Folder connection: pasting a folder ID the service account **cannot** list yet fails with a clear, actionable error (not a generic 500/404). Verified: `422` with a "Share it with `<service-account-email>`" message.
 - [x] Re-verifying an already-connected folder after access is revoked (unshared) surfaces a clear "no longer accessible" status rather than silently continuing to report it as connected. Verified: `POST /folders/:id/verify` updates status to `NOT_ACCESSIBLE` and returns it with an error message, `200` not `500`.
 - [ ] **Namespace isolation**: account A's retrieval query never returns account B's chunks, even under a shared index/collection — test with two real accounts and overlapping/similar content. Runs against whichever `VectorStore` adapter is active (part of the contract suite above), not just Pinecone.
-- [ ] Sync job iterates every connected folder across every account, not just one; one account's folder list doesn't leak into another's sync run.
+- [x] Sync job iterates every connected folder across every account, not just one; one account's folder list doesn't leak into another's sync run. `src/sync/syncAllFolders.test.ts` — every CONNECTED folder gets a per-folder outcome; verified with a real end-to-end run (throwaway Postgres + Redis + real BullMQ worker) that the job correctly queries and processes seeded folders.
 ## Integration tests
  
 - [ ] Full sync run against a real test Drive folder — add/modify/delete a file, confirm the configured vector store + Postgres reflect it correctly after sync.
@@ -138,8 +138,8 @@ Covers the v1-carried-forward pipeline plus everything new in v2 (own auth, mult
 - [ ] Vector store write failure mid-batch → no silent data loss; sync marked failed/partial, not falsely "success".
 - [ ] Malformed/corrupted file in a folder → skipped with a logged warning, doesn't halt the rest of that account's sync or any other account's.
 - [ ] Concurrent sync runs (scheduled job overlaps a manual trigger, or two accounts sync simultaneously) → locking prevents duplicate/conflicting writes without serializing unrelated accounts unnecessarily.
-- [ ] **Per-account failure isolation**: one account's broken/inaccessible folder doesn't stall or fail other accounts' syncs in the same run.
-- [ ] **Per-account rate limiting**: one account can't monopolize the shared service account's Drive API quota — confirm a heavy account gets throttled without starving others.
+- [x] **Per-account failure isolation**: one account's broken/inaccessible folder doesn't stall or fail other accounts' syncs in the same run. `src/sync/syncAllFolders.test.ts` ("isolates one folder's failure") + `src/sync/syncFolder.test.ts` (extraction/unexpected errors recorded per-file without throwing). Verified live: a real sync run against a nonexistent Drive folder failed cleanly with the outcome recorded, worker kept running.
+- [x] **Per-account rate limiting**: one account can't monopolize the shared service account's Drive API quota — confirm a heavy account gets throttled without starving others. `src/scheduling/concurrencyLimiter.test.ts` + `src/sync/syncAllFolders.test.ts` ("caps concurrent syncs per account without limiting a different account"). Caps concurrent *folder syncs* per account as an approximation of concurrent Drive API calls (see M12 decisions) — not yet verified against real simultaneous multi-account load.
 ## Scheduling & observability
  
 - [ ] Cron/queue trigger fires reliably on schedule.

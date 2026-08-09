@@ -15,6 +15,8 @@ export interface FolderRepository {
   markVerified(id: string, status: FolderStatus): Promise<FolderRecord>;
   findByIdForAccount(accountId: string, id: string): Promise<FolderRecord | null>;
   listForAccount(accountId: string): Promise<FolderRecord[]>;
+  /** Every CONNECTED folder across every account — what M12's sync run iterates. */
+  listAllConnected(): Promise<FolderRecord[]>;
 }
 
 export function createPrismaFolderRepository(client: PrismaClient = prisma): FolderRepository {
@@ -41,6 +43,10 @@ export function createPrismaFolderRepository(client: PrismaClient = prisma): Fol
 
     async listForAccount(accountId) {
       return client.driveFolder.findMany({ where: { accountId }, orderBy: { connectedAt: "asc" } });
+    },
+
+    async listAllConnected() {
+      return client.driveFolder.findMany({ where: { status: "CONNECTED" }, orderBy: { accountId: "asc" } });
     },
   };
 }
