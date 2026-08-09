@@ -53,6 +53,14 @@ function makeFakePineconeIndexClient(): PineconeIndexClient {
         async deleteMany(ids) {
           for (const id of ids) ns.delete(id);
         },
+        async fetch(ids) {
+          const records: Record<string, { id: string; values?: number[]; metadata?: Record<string, unknown> }> = {};
+          for (const id of ids) {
+            const record = ns.get(id);
+            if (record) records[id] = { id, values: record.values, metadata: record.metadata };
+          }
+          return { records };
+        },
       };
     },
     async describeIndexStats() {
@@ -94,6 +102,7 @@ describe("createPineconeVectorStore", () => {
         upsert: vi.fn(),
         query: vi.fn(async () => ({ matches: [{ id: "a", metadata: { title: "doc" } }] })),
         deleteMany: vi.fn(),
+        fetch: vi.fn(),
       }),
       describeIndexStats: vi.fn(),
     };
@@ -111,6 +120,7 @@ describe("createPineconeVectorStore", () => {
         upsert: vi.fn(),
         query: queryFn,
         deleteMany: vi.fn(),
+        fetch: vi.fn(),
       })),
       describeIndexStats: vi.fn(),
     };
@@ -140,5 +150,39 @@ describe("createPineconeVectorStore", () => {
     const store = createPineconeVectorStore({ client });
 
     expect(await store.getDimension()).toBe(1536);
+  });
+
+  it("skips the fetch call entirely for an empty id list", async () => {
+    const namespaceFn = vi.fn();
+    const client: PineconeIndexClient = { namespace: namespaceFn, describeIndexStats: vi.fn() };
+    const store = createPineconeVectorStore({ client });
+
+    expect(await store.fetch("ns", [])).toEqual([]);
+    expect(namespaceFn).not.toHaveBeenCalled();
+  });
+
+  it("maps the Pinecone fetch response's records map into a VectorRecord array", async () => {
+    const client: PineconeIndexClient = {
+      namespace: () => ({
+        upsert: vi.fn(),
+        query: vi.fn(),
+        deleteMany: vi.fn(),
+        fetch: vi.fn(async () => ({
+          records: {
+            a: { id: "a", values: [1, 0, 0], metadata: { text: "chunk a" } },
+            b: { id: "b", values: [0, 1, 0] },
+          },
+        })),
+      }),
+      describeIndexStats: vi.fn(),
+    };
+    const store = createPineconeVectorStore({ client });
+
+    const results = await store.fetch("ns", ["a", "b"]);
+
+    expect(results.sort((x, y) => x.id.localeCompare(y.id))).toEqual([
+      { id: "a", values: [1, 0, 0], metadata: { text: "chunk a" } },
+      { id: "b", values: [0, 1, 0], metadata: undefined },
+    ]);
   });
 });

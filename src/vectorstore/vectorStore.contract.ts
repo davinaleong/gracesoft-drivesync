@@ -87,5 +87,26 @@ export function defineVectorStoreContractTests(
         expect(dimension).toBeGreaterThan(0);
       }
     });
+
+    it("fetch returns previously-upserted records by exact ID, and omits IDs that don't exist", async () => {
+      const store = createStore();
+      const namespace = uniqueNamespace("fetch");
+
+      await store.upsert(namespace, [
+        { id: "a", values: [1, 0, 0], metadata: { text: "chunk a" } },
+        { id: "b", values: [0, 1, 0], metadata: { text: "chunk b" } },
+      ]);
+      await sleep(settleDelayMs);
+
+      const fetched = await store.fetch(namespace, ["a", "b", "does-not-exist"]);
+
+      expect(fetched.map((r) => r.id).sort()).toEqual(["a", "b"]);
+      expect(fetched.find((r) => r.id === "a")?.metadata).toEqual({ text: "chunk a" });
+    });
+
+    it("fetch returns nothing for an empty ID list", async () => {
+      const store = createStore();
+      expect(await store.fetch(uniqueNamespace("fetch-empty"), [])).toEqual([]);
+    });
   });
 }

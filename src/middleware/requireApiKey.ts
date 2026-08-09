@@ -24,17 +24,27 @@ export function createRequireApiKey(repository: ApiKeyRepository) {
       return;
     }
 
-    const { API_KEY_PEPPER } = loadEnv();
-    const hashedKey = hashApiKey(rawKey, API_KEY_PEPPER);
-    const result = await repository.findActiveByHashedKey(hashedKey);
+    // Express 4 doesn't await async middleware, so a rejected promise here
+    // becomes an unhandled rejection that crashes the whole process, not
+    // just this request — a single transient DB blip would take the server
+    // down for every in-flight request. Routing the error to Express's
+    // error-handling chain via next(err) instead keeps a lookup failure
+    // scoped to a 500 on this request.
+    try {
+      const { API_KEY_PEPPER } = loadEnv();
+      const hashedKey = hashApiKey(rawKey, API_KEY_PEPPER);
+      const result = await repository.findActiveByHashedKey(hashedKey);
 
-    if (!result) {
-      res.status(401).json(UNAUTHORIZED_BODY);
-      return;
+      if (!result) {
+        res.status(401).json(UNAUTHORIZED_BODY);
+        return;
+      }
+
+      req.account = result.account;
+      void repository.touchLastUsed(result.apiKeyId);
+      next();
+    } catch (err) {
+      next(err);
     }
-
-    req.account = result.account;
-    void repository.touchLastUsed(result.apiKeyId);
-    next();
   };
 }

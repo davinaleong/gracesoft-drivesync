@@ -75,6 +75,9 @@ function makeFakeFileRepository(seed: FileRecord[] = []): FileRepository {
     async deleteByFileIds(driveFolderId, fileIds) {
       for (const fileId of fileIds) rows.delete(`${driveFolderId}:${fileId}`);
     },
+    async findByFileId(accountId, fileId) {
+      return [...rows.values()].find((r) => r.accountId === accountId && r.fileId === fileId) ?? null;
+    },
   };
 }
 
@@ -92,6 +95,9 @@ function makeFakeVectorStore(): VectorStore & { upserted: Array<{ namespace: str
     },
     async delete(namespace, ids) {
       deleted.push({ namespace, ids });
+    },
+    async fetch() {
+      return [];
     },
     async getDimension() {
       return undefined;
@@ -277,6 +283,7 @@ describe("createFolderSyncer", () => {
       },
       query: async () => [],
       delete: async () => {},
+      fetch: async () => [],
       getDimension: async () => undefined,
     };
     const textExtractor = makeFakeTextExtractor({

@@ -11,6 +11,7 @@ function makeVectorStore(matches: ScoredVectorRecord[]): VectorStore {
   return {
     upsert: vi.fn(),
     delete: vi.fn(),
+    fetch: vi.fn(async () => []),
     getDimension: vi.fn(async () => undefined),
     query: vi.fn(async () => matches),
   };

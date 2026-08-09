@@ -8,6 +8,7 @@ export interface PineconeNamespaceClient {
     matches: Array<{ id: string; score?: number; metadata?: Record<string, unknown> }>;
   }>;
   deleteMany(ids: string[]): Promise<void>;
+  fetch(ids: string[]): Promise<{ records: Record<string, { id: string; values?: number[]; metadata?: Record<string, unknown> }> }>;
 }
 
 export interface PineconeIndexClient {
@@ -29,6 +30,7 @@ export function createPineconeIndexClient(apiKey: string, indexName: string): Pi
         upsert: (records) => scoped.upsert(records as Array<{ id: string; values: number[]; metadata?: RecordMetadata }>),
         query: (options) => scoped.query(options),
         deleteMany: (ids) => scoped.deleteMany(ids),
+        fetch: (ids) => scoped.fetch(ids),
       };
     },
     describeIndexStats: () => index.describeIndexStats(),
@@ -54,6 +56,16 @@ export function createPineconeVectorStore(deps: { client: PineconeIndexClient })
     async delete(namespace: string, ids: string[]): Promise<void> {
       if (ids.length === 0) return;
       await deps.client.namespace(namespace).deleteMany(ids);
+    },
+
+    async fetch(namespace: string, ids: string[]): Promise<VectorRecord[]> {
+      if (ids.length === 0) return [];
+      const res = await deps.client.namespace(namespace).fetch(ids);
+      return Object.values(res.records).map((record) => ({
+        id: record.id,
+        values: record.values ?? [],
+        metadata: record.metadata,
+      }));
     },
 
     async getDimension(): Promise<number | undefined> {

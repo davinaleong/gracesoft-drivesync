@@ -31,6 +31,8 @@ export interface FileRepository {
   upsertSynced(params: UpsertSyncedFileParams): Promise<FileRecord>;
   /** Removes tracking rows for files no longer present (M4's `deleted` list). */
   deleteByFileIds(driveFolderId: string, fileIds: string[]): Promise<void>;
+  /** Scoped to the account, regardless of which of its folders the file lives in — what M14's document fetch looks up chunkCount by. */
+  findByFileId(accountId: string, fileId: string): Promise<FileRecord | null>;
 }
 
 export function createPrismaFileRepository(client: PrismaClient = prisma): FileRepository {
@@ -67,6 +69,10 @@ export function createPrismaFileRepository(client: PrismaClient = prisma): FileR
     async deleteByFileIds(driveFolderId, fileIds) {
       if (fileIds.length === 0) return;
       await client.driveFile.deleteMany({ where: { driveFolderId, fileId: { in: fileIds } } });
+    },
+
+    async findByFileId(accountId, fileId) {
+      return client.driveFile.findFirst({ where: { accountId, fileId } });
     },
   };
 }

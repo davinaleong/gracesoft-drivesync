@@ -27,6 +27,7 @@ function makeVectorStore(dimension: number | undefined): VectorStore {
     upsert: async () => {},
     query: async () => [],
     delete: async () => {},
+    fetch: async () => [],
     getDimension: async () => dimension,
   };
 }

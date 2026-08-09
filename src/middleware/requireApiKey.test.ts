@@ -92,4 +92,21 @@ describe("requireApiKey", () => {
     expect(status).toHaveBeenCalledWith(401);
     expect(json).toHaveBeenCalledWith({ error: "unauthorized" });
   });
+
+  it("routes a repository failure (e.g. the database is unreachable) to next(err) instead of throwing", async () => {
+    const dbDownRepository = makeRepository({
+      findActiveByHashedKey: vi.fn(async () => {
+        throw new Error("connection refused");
+      }),
+    });
+    const { req, res, status, next } = makeReqRes(`Bearer ${VALID_RAW_KEY}`);
+
+    // If this rejects, Express 4 would turn it into an unhandled rejection
+    // that can crash the whole process — the assertion here is really that
+    // createRequireApiKey's promise resolves at all.
+    await createRequireApiKey(dbDownRepository)(req, res, next);
+
+    expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: "connection refused" }));
+    expect(status).not.toHaveBeenCalled();
+  });
 });

@@ -13,6 +13,7 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "worker": "tsx src/worker.ts",
+    "mcp": "tsx src/mcp.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
@@ -27,6 +28,7 @@
     "api-key:revoke": "tsx scripts/revoke-api-key.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@pinecone-database/pinecone": "^3.0.3",
     "@prisma/client": "^5.20.0",
     "bullmq": "^5.13.2",
