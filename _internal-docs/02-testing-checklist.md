@@ -149,6 +149,6 @@ Covers the v1-carried-forward pipeline plus everything new in v2 (own auth, mult
 - [x] Alerting fires (or the log signal it would consume exists) on repeated sync failures for a given account. No alerting integration exists; the log signal does — `src/sync/syncAllFolders.ts` logs `logger.error` with `accountId`/`driveFolderId`/`consecutiveFailures` once a folder's `DriveFolder.consecutiveFailures` (persisted via the new `recordSyncResult`) crosses a threshold (3). Tested in `syncAllFolders.test.ts`.
 ## Open-source readiness tests
  
-- [ ] Fresh clone + documented setup steps (README quickstart) actually gets a new contributor to a running local instance without tribal knowledge.
-- [ ] `.env.example` has no leftover real values, and the app fails fast with a clear message on any missing required var.
-- [ ] CI pipeline (lint/typecheck/test/build) passes on a clean checkout — no repeat of v1's silent-env-stripping or uninstalled-eslint bugs.
+- [x] Fresh clone + documented setup steps (README quickstart) actually gets a new contributor to a running local instance without tribal knowledge. Every command in the README's Quickstart (`prisma:migrate`, `account:create`, `api-key:issue`, starting the server, the `POST /folders` and other curl examples) was run for real against a throwaway Postgres/Redis and confirmed to work exactly as documented.
+- [x] `.env.example` has no leftover real values, and the app fails fast with a clear message on any missing required var. Confirmed by inspection (all sensitive vars ship empty) and `src/config/env.test.ts` (M1).
+- [x] CI pipeline (lint/typecheck/test/build) passes on a clean checkout — no repeat of v1's silent-env-stripping or uninstalled-eslint bugs. Verified via real GitHub Actions history (`gh run list`) — every push since M3 has passed CI independently on a fresh checkout with fresh service containers, not just local runs.
