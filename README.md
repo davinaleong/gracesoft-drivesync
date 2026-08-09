@@ -97,6 +97,7 @@ CI (`.github/workflows/ci.yml`) runs all four against fresh Postgres/Redis servi
 - [Adding a provider](docs/adding-a-provider.md) — implement `EmbeddingProvider` or `VectorStore` for a different embedding API or vector database.
 - [Architecture](docs/architecture.md) — the pipeline in more detail, and the design decisions behind the interface boundaries.
 - [API reference](docs/api-reference.md) — REST endpoints and MCP tools.
+- [Deployment runbook](docs/deployment-runbook.md) — process topology, required env vars, the OpenAI/Pinecone module setup (including the dimension-compatibility check to run before every deploy), migrations, and rollback.
 
 ## Contributing
 
