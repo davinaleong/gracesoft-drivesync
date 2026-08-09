@@ -73,5 +73,19 @@ export function defineVectorStoreContractTests(
       expect(resultsA).toHaveLength(0);
       expect(resultsB.map((r) => r.id)).toContain("shared-id");
     });
+
+    it("reports a dimension that is either unknown or a positive integer", async () => {
+      const store = createStore();
+      const namespace = uniqueNamespace("dimension");
+      await store.upsert(namespace, [{ id: "a", values: [1, 0, 0] }]);
+      await sleep(settleDelayMs);
+
+      const dimension = await store.getDimension();
+
+      if (dimension !== undefined) {
+        expect(Number.isInteger(dimension)).toBe(true);
+        expect(dimension).toBeGreaterThan(0);
+      }
+    });
   });
 }

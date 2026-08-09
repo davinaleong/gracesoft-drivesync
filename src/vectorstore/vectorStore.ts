@@ -20,4 +20,12 @@ export interface VectorStore {
   upsert(namespace: string, records: VectorRecord[]): Promise<void>;
   query(namespace: string, vector: number[], topK: number): Promise<ScoredVectorRecord[]>;
   delete(namespace: string, ids: string[]): Promise<void>;
+  /**
+   * The dimension the underlying index/collection was created with, or
+   * `undefined` if that isn't knowable yet (e.g. a brand-new index with no
+   * dimension reported until data exists). Used to enforce M9's provider-swap
+   * rule: an `EmbeddingProvider`'s dimension must match this, or the two are
+   * incompatible without a full resync.
+   */
+  getDimension(): Promise<number | undefined>;
 }

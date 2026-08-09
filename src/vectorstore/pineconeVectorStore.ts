@@ -12,6 +12,7 @@ export interface PineconeNamespaceClient {
 
 export interface PineconeIndexClient {
   namespace(namespace: string): PineconeNamespaceClient;
+  describeIndexStats(): Promise<{ dimension?: number }>;
 }
 
 export function createPineconeIndexClient(apiKey: string, indexName: string): PineconeIndexClient {
@@ -30,6 +31,7 @@ export function createPineconeIndexClient(apiKey: string, indexName: string): Pi
         deleteMany: (ids) => scoped.deleteMany(ids),
       };
     },
+    describeIndexStats: () => index.describeIndexStats(),
   };
 }
 
@@ -52,6 +54,11 @@ export function createPineconeVectorStore(deps: { client: PineconeIndexClient })
     async delete(namespace: string, ids: string[]): Promise<void> {
       if (ids.length === 0) return;
       await deps.client.namespace(namespace).deleteMany(ids);
+    },
+
+    async getDimension(): Promise<number | undefined> {
+      const stats = await deps.client.describeIndexStats();
+      return stats.dimension;
     },
   };
 }

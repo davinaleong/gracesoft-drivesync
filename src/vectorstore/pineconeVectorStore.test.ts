@@ -55,6 +55,11 @@ function makeFakePineconeIndexClient(): PineconeIndexClient {
         },
       };
     },
+    async describeIndexStats() {
+      const [firstNamespace] = namespaces.values();
+      const [firstRecord] = firstNamespace?.values() ?? [];
+      return { dimension: firstRecord?.values.length };
+    },
   };
 }
 
@@ -65,7 +70,7 @@ defineVectorStoreContractTests("Pinecone adapter", () =>
 describe("createPineconeVectorStore", () => {
   it("skips the upsert call entirely for an empty record list", async () => {
     const namespaceFn = vi.fn();
-    const client: PineconeIndexClient = { namespace: namespaceFn };
+    const client: PineconeIndexClient = { namespace: namespaceFn, describeIndexStats: vi.fn() };
     const store = createPineconeVectorStore({ client });
 
     await store.upsert("ns", []);
@@ -75,7 +80,7 @@ describe("createPineconeVectorStore", () => {
 
   it("skips the delete call entirely for an empty id list", async () => {
     const namespaceFn = vi.fn();
-    const client: PineconeIndexClient = { namespace: namespaceFn };
+    const client: PineconeIndexClient = { namespace: namespaceFn, describeIndexStats: vi.fn() };
     const store = createPineconeVectorStore({ client });
 
     await store.delete("ns", []);
@@ -90,6 +95,7 @@ describe("createPineconeVectorStore", () => {
         query: vi.fn(async () => ({ matches: [{ id: "a", metadata: { title: "doc" } }] })),
         deleteMany: vi.fn(),
       }),
+      describeIndexStats: vi.fn(),
     };
     const store = createPineconeVectorStore({ client });
 
@@ -106,6 +112,7 @@ describe("createPineconeVectorStore", () => {
         query: queryFn,
         deleteMany: vi.fn(),
       })),
+      describeIndexStats: vi.fn(),
     };
     const store = createPineconeVectorStore({ client });
 
@@ -113,5 +120,25 @@ describe("createPineconeVectorStore", () => {
 
     expect(client.namespace).toHaveBeenCalledWith("acct_123");
     expect(queryFn).toHaveBeenCalledWith({ vector: [0.1, 0.2, 0.3], topK: 5, includeMetadata: true });
+  });
+
+  it("returns undefined dimension when the index reports none", async () => {
+    const client: PineconeIndexClient = {
+      namespace: vi.fn(),
+      describeIndexStats: vi.fn(async () => ({})),
+    };
+    const store = createPineconeVectorStore({ client });
+
+    expect(await store.getDimension()).toBeUndefined();
+  });
+
+  it("returns the index's reported dimension", async () => {
+    const client: PineconeIndexClient = {
+      namespace: vi.fn(),
+      describeIndexStats: vi.fn(async () => ({ dimension: 1536 })),
+    };
+    const store = createPineconeVectorStore({ client });
+
+    expect(await store.getDimension()).toBe(1536);
   });
 });
