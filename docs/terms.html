@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Terms &amp; Conditions — GraceSoft DriveSync</title>
+<meta name="description" content="Terms for using and self-hosting GraceSoft DriveSync." />
+<link rel="preconnect" href="https://fonts.bunny.net" />
+<link href="https://fonts.bunny.net/css?family=montserrat:400,500,600,700|playfair-display:400,600,700|source-code-pro:400,600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --accent: #372aac;
+    --accent-strong: #342b87;
+    --accent-tint: #e8e5ff;
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --ink: #0e0e0e;
+    --muted: #4c4c4c;
+    --faint: #6f6f6f;
+    --border: #e9e9e9;
+    --code-bg: #fafafa;
+    --warning: #c0632e;
+    --warning-tint: #fbeee6;
+
+    --sans: Montserrat, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --display: "Playfair Display", Georgia, "Times New Roman", serif;
+    --mono: "Source Code Pro", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  :root[data-theme="dark"] {
+    --accent: #8d80fe;
+    --accent-strong: #b1a8ff;
+    --accent-tint: #1f1a51;
+    --bg: #000000;
+    --surface: #0e0e0e;
+    --ink: #fafafa;
+    --muted: #a3a3a3;
+    --faint: #6f6f6f;
+    --border: #393939;
+    --code-bg: #1e1e1e;
+    --warning: #d98552;
+    --warning-tint: #2e2013;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --accent: #8d80fe;
+      --accent-strong: #b1a8ff;
+      --accent-tint: #1f1a51;
+      --bg: #000000;
+      --surface: #0e0e0e;
+      --ink: #fafafa;
+      --muted: #a3a3a3;
+      --faint: #6f6f6f;
+      --border: #393939;
+      --code-bg: #1e1e1e;
+      --warning: #d98552;
+      --warning-tint: #2e2013;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration-thickness: 1px; }
+  a:hover { color: var(--accent-strong); }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .page {
+    max-width: 42rem;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+  }
+
+  .backlink {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--faint);
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 2rem;
+  }
+  .backlink:hover { color: var(--accent); }
+
+  h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 2rem;
+    margin: 0 0 0.4rem;
+    letter-spacing: -0.01em;
+  }
+
+  .updated {
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    color: var(--faint);
+    margin: 0 0 1.75rem;
+  }
+
+  .disclaimer {
+    background: var(--warning-tint);
+    border-left: 3px solid var(--warning);
+    border-radius: 0 4px 4px 0;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.92rem;
+    color: var(--ink);
+    margin-bottom: 2.25rem;
+  }
+
+  h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.15rem;
+    margin: 2.25rem 0 0.75rem;
+    letter-spacing: -0.005em;
+  }
+
+  section:first-of-type h2 { margin-top: 0; }
+
+  p { margin: 0 0 1rem; color: var(--ink); }
+  ul { margin: 0 0 1rem; padding-left: 1.3rem; }
+  li { margin-bottom: 0.55rem; color: var(--ink); }
+  strong { color: var(--ink); }
+  code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--code-bg);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+  }
+
+  .page-foot {
+    border-top: 1px solid var(--border);
+    padding-top: 1.5rem;
+    margin-top: 3rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--faint);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <a class="backlink" href="index.html">&larr; Back to documentation</a>
+
+  <h1>Terms &amp; Conditions</h1>
+  <p class="updated">Last updated 2026-08-10</p>
+
+  <div class="disclaimer">
+    This is a template — have a lawyer review and adapt it to your jurisdiction and business before relying on it. It describes GraceSoft DriveSync as open-source, self-hosted software, as it actually works today — not aspirational terms for a hosted product that doesn't exist.
+  </div>
+
+  <section>
+    <h2>1. License</h2>
+    <p>DriveSync is open-source software licensed under the <a href="../LICENSE">MIT License</a>. You may use, modify, and self-host it, and use it for commercial or non-commercial purposes, subject to that license's terms — most notably, that the copyright notice and license text are preserved in copies or substantial portions of the software.</p>
+  </section>
+
+  <section>
+    <h2>2. No warranty</h2>
+    <p>DriveSync is provided "as is," without warranty of any kind, express or implied, as stated in the MIT License. The people who maintain this project are not liable for any claim, damages, or other liability arising from its use.</p>
+  </section>
+
+  <section>
+    <h2>3. Your responsibility as an operator</h2>
+    <p>If you deploy DriveSync — for yourself or for other people — you are the one in control of that deployment: your own Google Cloud, OpenAI, and Pinecone credentials, your own database, and your own infrastructure. You're responsible for complying with applicable law in your jurisdiction, including any obligations you may have to people whose Google Drive content your deployment indexes.</p>
+  </section>
+
+  <section>
+    <h2>4. Third-party services</h2>
+    <p>Connecting Google Drive, and configuring an <code>EmbeddingProvider</code> or <code>VectorStore</code> such as OpenAI or Pinecone, means you are separately bound by each of those providers' own terms of service and pricing. DriveSync is not a party to those agreements, and isn't responsible for those providers' availability, pricing changes, or policies.</p>
+  </section>
+
+  <section>
+    <h2>5. Contributing</h2>
+    <p>Contributions are welcome under the terms described in <a href="../CONTRIBUTING.md">CONTRIBUTING.md</a>, and are licensed back to the project under the same MIT License.</p>
+  </section>
+
+  <section>
+    <h2>6. Changes to these terms</h2>
+    <p>We'll update the "last updated" date above if these terms change. There's no account system to email about changes — check this page, or the repository's commit history, for the current version.</p>
+  </section>
+
+  <section>
+    <h2>7. Questions</h2>
+    <p>Open an issue on <a href="https://github.com/davinaleong/gracesoft-drivesync" target="_blank" rel="noopener">the GitHub repository</a> with questions about these terms.</p>
+  </section>
+
+  <div class="page-foot">
+    <span>GraceSoft DriveSync</span>
+    <a href="privacy.html">Privacy Policy</a>
+  </div>
+</div>
+</body>
+</html>

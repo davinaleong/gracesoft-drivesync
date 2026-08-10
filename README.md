@@ -116,6 +116,7 @@ CI (`.github/workflows/ci.yml`) runs all four against fresh Postgres/Redis servi
 - [Architecture](docs/architecture.md) — the pipeline in more detail, and the design decisions behind the interface boundaries.
 - [API reference](docs/api-reference.md) — REST endpoints and MCP tools.
 - [Deployment runbook](docs/deployment-runbook.md) — process topology, required env vars, the OpenAI/Pinecone module setup (including the dimension-compatibility check to run before every deploy), migrations, and rollback.
+- [Privacy Policy](docs/privacy.html) and [Terms & Conditions](docs/terms.html) — templates describing what this self-hosted software actually does with data; adapt before relying on them for a real deployment.
 
 ## Contributing
 

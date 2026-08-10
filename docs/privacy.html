@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Privacy Policy — GraceSoft DriveSync</title>
+<meta name="description" content="What GraceSoft DriveSync, as self-hosted software, does with data today." />
+<link rel="preconnect" href="https://fonts.bunny.net" />
+<link href="https://fonts.bunny.net/css?family=montserrat:400,500,600,700|playfair-display:400,600,700|source-code-pro:400,600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --accent: #372aac;
+    --accent-strong: #342b87;
+    --accent-tint: #e8e5ff;
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --ink: #0e0e0e;
+    --muted: #4c4c4c;
+    --faint: #6f6f6f;
+    --border: #e9e9e9;
+    --code-bg: #fafafa;
+    --warning: #c0632e;
+    --warning-tint: #fbeee6;
+
+    --sans: Montserrat, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --display: "Playfair Display", Georgia, "Times New Roman", serif;
+    --mono: "Source Code Pro", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  :root[data-theme="dark"] {
+    --accent: #8d80fe;
+    --accent-strong: #b1a8ff;
+    --accent-tint: #1f1a51;
+    --bg: #000000;
+    --surface: #0e0e0e;
+    --ink: #fafafa;
+    --muted: #a3a3a3;
+    --faint: #6f6f6f;
+    --border: #393939;
+    --code-bg: #1e1e1e;
+    --warning: #d98552;
+    --warning-tint: #2e2013;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --accent: #8d80fe;
+      --accent-strong: #b1a8ff;
+      --accent-tint: #1f1a51;
+      --bg: #000000;
+      --surface: #0e0e0e;
+      --ink: #fafafa;
+      --muted: #a3a3a3;
+      --faint: #6f6f6f;
+      --border: #393939;
+      --code-bg: #1e1e1e;
+      --warning: #d98552;
+      --warning-tint: #2e2013;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration-thickness: 1px; }
+  a:hover { color: var(--accent-strong); }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .page {
+    max-width: 42rem;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+  }
+
+  .backlink {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--faint);
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 2rem;
+  }
+  .backlink:hover { color: var(--accent); }
+
+  h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 2rem;
+    margin: 0 0 0.4rem;
+    letter-spacing: -0.01em;
+  }
+
+  .updated {
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    color: var(--faint);
+    margin: 0 0 1.75rem;
+  }
+
+  .disclaimer {
+    background: var(--warning-tint);
+    border-left: 3px solid var(--warning);
+    border-radius: 0 4px 4px 0;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.92rem;
+    color: var(--ink);
+    margin-bottom: 2.25rem;
+  }
+
+  h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.15rem;
+    margin: 2.25rem 0 0.75rem;
+    letter-spacing: -0.005em;
+  }
+
+  section:first-of-type h2 { margin-top: 0; }
+
+  p { margin: 0 0 1rem; color: var(--ink); }
+  ul { margin: 0 0 1rem; padding-left: 1.3rem; }
+  li { margin-bottom: 0.55rem; color: var(--ink); }
+  strong { color: var(--ink); }
+  code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--code-bg);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+  }
+
+  .page-foot {
+    border-top: 1px solid var(--border);
+    padding-top: 1.5rem;
+    margin-top: 3rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--faint);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <a class="backlink" href="index.html">&larr; Back to documentation</a>
+
+  <h1>Privacy Policy</h1>
+  <p class="updated">Last updated 2026-08-10</p>
+
+  <div class="disclaimer">
+    This is a template describing what GraceSoft DriveSync — as self-hosted software — actually does with data today. It is not legal advice. If you operate a deployment of DriveSync for other people, have a lawyer review and adapt this (jurisdiction, data-retention periods, GDPR/CCPA or other regional obligations) before relying on it for a real business.
+  </div>
+
+  <section>
+    <h2>There is no central GraceSoft server</h2>
+    <p>DriveSync is open-source, self-hosted software. Every deployment runs entirely on infrastructure its operator controls: their own Postgres database, their own Redis instance, their own Google Cloud service account, and their own OpenAI and Pinecone accounts. The people who maintain this open-source project never receive, store, or have access to any data processed by a deployment we don't personally operate ourselves.</p>
+    <p>Everything below describes what the <em>software</em> does with data when someone runs it — not a relationship between you and a company operating a shared service, because no such shared service exists.</p>
+  </section>
+
+  <section>
+    <h2>What the software collects, per deployment</h2>
+    <ul>
+      <li><strong>Account &amp; API key data:</strong> an account name, and a hashed (HMAC-SHA256, never reversible) copy of each issued API key. A raw key is shown once at issuance and is never stored anywhere.</li>
+      <li><strong>Drive file content:</strong> for every folder an account connects, metadata (file name, type, last-modified time) and extracted text content from Google Docs, Sheets, Slides, and PDFs in that folder.</li>
+      <li><strong>Derived data:</strong> text chunks of that content, and the vector embeddings generated from them.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Third parties the software sends data to</h2>
+    <p>Each of these is the <strong>operator's own account</strong> with that provider — the DriveSync project itself is never a party to this data flow, and never sees the data in transit.</p>
+    <ul>
+      <li><strong>Google Drive API</strong> — to list and read the contents of connected folders, using the operator's own Google Cloud service account.</li>
+      <li><strong>OpenAI</strong> (or whichever <code>EmbeddingProvider</code> the operator configures) — extracted text is sent to generate embeddings.</li>
+      <li><strong>Pinecone</strong> (or whichever <code>VectorStore</code> the operator configures) — chunk text, file metadata, and embeddings are stored here.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Your choices</h2>
+    <ul>
+      <li><strong>Revoke folder access:</strong> unshare a connected folder from the service account's email in Google Drive. The next verification marks it inaccessible, and the software stops reading further content from it.</li>
+      <li><strong>Revoke an API key:</strong> an operator can revoke any issued key at any time, immediately blocking further API or MCP access with that key.</li>
+      <li><strong>Delete already-stored data:</strong> honestly — there is currently no built-in "disconnect and purge" action that removes a folder's already-indexed files, chunks, and vectors in one step. Unsharing stops <em>future</em> reads; previously indexed content remains in the operator's own Postgres database and vector store until removed directly. If you operate a deployment for other people, you're responsible for offering them a real deletion path — see <a href="https://github.com/davinaleong/gracesoft-drivesync/issues" target="_blank" rel="noopener">the project's issues</a> if you'd like to help build one.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Questions</h2>
+    <p>This is an open-source project without a central support inbox. Open an issue on <a href="https://github.com/davinaleong/gracesoft-drivesync" target="_blank" rel="noopener">the GitHub repository</a> with privacy questions about the software itself. If you're asking about a specific deployment, contact whoever operates it.</p>
+  </section>
+
+  <div class="page-foot">
+    <span>GraceSoft DriveSync</span>
+    <a href="terms.html">Terms &amp; Conditions</a>
+  </div>
+</div>
+</body>
+</html>
