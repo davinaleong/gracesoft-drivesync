@@ -1,6 +1,6 @@
 # Deployment runbook
 
-This is host-agnostic — no hosting provider has been chosen yet (see [M18](../_internal-docs/01-milestone-checklist.md)). It covers what's true regardless of where this runs: process topology, required env vars, the two currently-attached pluggable modules (OpenAI for embeddings, Pinecone for the vector store), migrations, and pre/post-deploy checks. Fill in the `<host-specific>` sections once a provider is picked.
+The core of this runbook (process topology, required env vars, the two currently-attached pluggable modules, migrations, pre/post-deploy checks) is host-agnostic. **Railway** is the chosen host (see [M18](../_internal-docs/01-milestone-checklist.md)) — the "Railway setup" section below has the concrete, host-specific steps; everything else applies regardless of where this runs.
 
 ## Process topology
 
@@ -12,7 +12,7 @@ One Docker image (see `Dockerfile`), three independently-run processes — not t
 | Sync worker | `node dist/worker.js` | Postgres, Redis, Google Drive, Pinecone, OpenAI | No |
 | MCP server | `node dist/mcp.js` | Postgres, Pinecone, OpenAI | Yes — MCP clients |
 
-The current `Dockerfile` only sets `CMD ["node", "dist/server.js"]`. Deploying the worker and MCP server means running the *same image* with an overridden start command — most PaaS providers (Railway, Render, Fly.io) support this natively as separate "services" sharing one build. There is no `docker-compose.yml` service for any of these three yet — the existing one only provisions local Postgres/Redis for development.
+The current `Dockerfile` only sets `CMD ["node", "dist/server.js"]`. Deploying the worker and MCP server means running the *same image* with an overridden start command — Railway supports this natively as separate services sharing one build (see "Railway setup" below). There is no `docker-compose.yml` service for any of these three yet — the existing one only provisions local Postgres/Redis for development.
 
 **Only one worker process should run per deployment right now.** See "Known gap: concurrent runs" below before scaling the worker horizontally.
 
@@ -25,7 +25,8 @@ Before touching a host, have these ready:
 - [ ] A GCP project with the Drive API enabled and a service account JSON key downloaded.
 - [ ] An OpenAI API key.
 - [ ] A Pinecone account, API key, and **an index created with the right dimension** — see the pluggable-modules section below before creating it.
-- [ ] A domain, if this is going to be reachable at anything other than the host's default subdomain. `<host-specific: DNS records, TLS>`
+- [ ] A domain, if this is going to be reachable at anything other than Railway's default `*.up.railway.app` subdomain (Railway handles TLS automatically either way).
+- [ ] Railway CLI installed locally (`npm install -g @railway/cli`) and logged in (`railway login`) — used for the one-off migration command.
 
 ## Environment variables
 
@@ -74,6 +75,35 @@ Embedding dimension is fixed per model and baked into a Pinecone index at creati
 
 Both are contribution points, not permanent choices — see [Adding a provider](adding-a-provider.md) for implementing a different `EmbeddingProvider` or `VectorStore`. Swapping on a deployment with existing data always means a full resync (delete and recreate the vector index, let the worker resync every connected folder from scratch) — there's no in-place migration, by design.
 
+## Railway setup
+
+One Railway project, three services sharing the same GitHub source and Docker build, plus two managed database plugins:
+
+1. **New Project → Deploy from GitHub repo** → select `davinaleong/gracesoft-drivesync`. Railway detects the `Dockerfile` automatically. Rename this first service to `api`.
+2. **New → Database → Add PostgreSQL**, then **New → Database → Add Redis**, in the same project.
+3. **`api` service** — leave the start command as the `Dockerfile` default (`node dist/server.js`). Settings → Networking → **Generate Domain** (Railway auto-assigns `PORT`, which `server.ts` already reads). Set variables (Settings → Variables):
+   ```
+   DATABASE_URL=${{Postgres.DATABASE_URL}}
+   REDIS_URL=${{Redis.REDIS_URL}}
+   NODE_ENV=production
+   LOG_LEVEL=info
+   API_KEY_PEPPER=<32+ random bytes>
+   GOOGLE_SERVICE_ACCOUNT_EMAIL=<...>
+   GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY=<paste private_key, keep \n literal>
+   EMBEDDING_PROVIDER=openai
+   OPENAI_API_KEY=<...>
+   OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+   VECTOR_STORE=pinecone
+   PINECONE_API_KEY=<...>
+   PINECONE_INDEX_NAME=<must already exist, dimension matching the embedding model>
+   ```
+4. **`worker` service** — new service, same repo/source. Settings → Deploy → Custom Start Command: `node dist/worker.js`. Same variables as `api`, plus optionally `SYNC_CRON`/`DRIVE_RATE_LIMIT_PER_ACCOUNT`. No public networking — don't generate a domain.
+5. **`mcp` service** — new service, same repo/source. Custom Start Command: `node dist/mcp.js`. Same shared variables, plus `MCP_SERVER_PORT`. Generate a domain, then explicitly set Networking → **target port** to match `MCP_SERVER_PORT` — unlike `api`, this service doesn't use Railway's automatic `PORT` convention since the var is named differently.
+
+Use **Project Settings → Shared Variables** to define the common set (DB/Drive/OpenAI/Pinecone credentials) once and reference them from all three services, instead of re-entering secrets per service.
+
+**Staging**: Railway's built-in **Environments** (Project → Environments → New Environment) — a `staging` environment alongside `production` in the same project, with its own variable values and, per the isolation note below, its own Pinecone index.
+
 ## Database migrations
 
 ```bash
@@ -91,17 +121,18 @@ Two fully separate environments — separate `DATABASE_URL`, separate Redis inst
 - Two Pinecone indexes (`drivesync-staging`, `drivesync`), one per environment.
 - A separate GCP service account per environment is optional but reduces blast radius if a staging key leaks.
 
-`<host-specific: how the provider names/isolates environments — e.g. Railway environments, Fly.io apps, separate Render services>`
+On Railway specifically: use its built-in Environments feature (see "Railway setup" above) rather than separate projects — variables and databases are scoped per environment automatically.
 
 ## Deploy steps
 
-1. Build the image (`docker build .`, or the host's native build step from this repo).
-2. `<host-specific: push image / trigger build>`
-3. Run `npm run prisma:deploy` against the target database (as a one-off job/task, not baked into the image's default `CMD`, so migrations run exactly once per deploy, not once per process replica).
-4. Start/restart the API server process.
-5. Start/restart the worker process. It re-registers its repeatable BullMQ job on every start using a fixed `jobId` (`scheduled-sync`) — restarting is idempotent, it won't accumulate duplicate schedules.
-6. Start/restart the MCP server process.
-7. `<host-specific: health check / readiness probe config — GET /health on the API server is unauthenticated and safe to use as a liveness check; there is no equivalent unauthenticated endpoint on the worker or MCP server, since they have nothing to serve without an account context>`
+1. Push to the branch connected to the Railway project (`main`) — Railway builds the `Dockerfile` and deploys all three services automatically on every push.
+2. Run `npm run prisma:deploy` as a one-off, not baked into any service's start command (so it runs exactly once per schema change, not once per process/replica):
+   ```bash
+   railway link   # once, selects the project
+   railway run npm run prisma:deploy
+   ```
+3. The `api`, `worker`, and `mcp` services redeploy in parallel from the same build — no manual start/restart sequencing needed. The worker re-registers its repeatable BullMQ job on every start using a fixed `jobId` (`scheduled-sync`), so redeploys are idempotent and never accumulate duplicate schedules.
+4. Railway's health checks: `GET /health` on the `api` service is unauthenticated and safe to use as Railway's health-check path (Settings → Deploy → Healthcheck Path). The `worker` and `mcp` services have nothing equivalent to check without an account context — leave their healthcheck unset and rely on Railway's default (container stays up / process exit code).
 
 ## Post-deploy smoke test
 

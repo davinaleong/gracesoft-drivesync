@@ -863,7 +863,7 @@ npm run mcp      # MCP server on MCP_SERVER_PORT (default 3001)</code></pre>
         <span class="section-path">#deployment</span>
       </div>
       <div class="prose">
-        <p>One Docker image, three independently-run processes — not three images. The current <code>Dockerfile</code> only defines a start command for the API server; the worker and MCP server run from the same image with an overridden command.</p>
+        <p>One Docker image, three independently-run processes — not three images. The current <code>Dockerfile</code> only defines a start command for the API server; the worker and MCP server run from the same image with an overridden command. <strong>Railway</strong> is the chosen host — one project, three services (<code>api</code>, <code>worker</code>, <code>mcp</code>) sharing this build, plus managed Postgres and Redis plugins.</p>
       </div>
 
       <div class="table-wrap">

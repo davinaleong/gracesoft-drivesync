@@ -17,7 +17,7 @@ Syncs Google Drive folders into a vector store for retrieval-augmented generatio
 | **Pluggable modules attached** | Embeddings: **OpenAI** · Vector store: **Pinecone** (swap either — see [Adding a provider](docs/adding-a-provider.md)) |
 | **Multi-tenant** | Per-account API keys; per-account vector namespace, never shared |
 | **Processes** | `server` (REST), `worker` (scheduled sync), `mcp` (MCP tools) — one image, three start commands |
-| **Build status** | 17/18 milestones complete — deploy runbook written, hosting target not yet chosen ([M18](_internal-docs/01-milestone-checklist.md)) |
+| **Build status** | 17/18 milestones complete — hosting on **Railway** ([deploy runbook](docs/deployment-runbook.md)); actual project not yet provisioned ([M18](_internal-docs/01-milestone-checklist.md)) |
 
 ## Features
 
