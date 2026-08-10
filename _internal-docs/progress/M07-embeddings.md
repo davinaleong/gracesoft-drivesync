@@ -29,3 +29,12 @@ Status: **Done**
 ## Next
 
 M8 — Vector store writes: define a `VectorStore` interface (`upsert`, `query`, `delete`, namespace-scoped), ship a Pinecone reference adapter with per-account namespacing and stable vector IDs.
+
+## Addendum (post-M18): OPENAI_EMBEDDING_DIMENSIONS
+
+Found while troubleshooting a real "no objects in the vector store" report: the user's actual Pinecone infrastructure (`drive-sync-dev`, `drive-sync-prod`, and a newly created `gracesoft-drivesync-dev`) was **all 512-dimensional** — but `createOpenAiEmbeddingProvider` had no way to request anything but a model's full native dimension (1536 for `text-embedding-3-small`), so every real sync run failed at M9's dimension check before writing anything.
+
+- `src/embeddings/openaiEmbeddingProvider.ts` — added an optional `dimensions` option, passed through to OpenAI's `embeddings.create` call (the API's own `dimensions` parameter, which truncates a `text-embedding-3-small`/`-large` embedding to a smaller size). Validated at construction: rejects a `dimensions` override on `text-embedding-ada-002` (which doesn't support the parameter at all) or a value exceeding the model's native dimension — same "fail fast at construction, not mid-sync" principle as the unknown-model check.
+- `src/config/env.ts` — new optional `OPENAI_EMBEDDING_DIMENSIONS`, wired through `src/embeddings/index.ts`'s registry.
+- **Verified end-to-end against the real OpenAI and Pinecone APIs**, not just mocks: requested a real 512-dim embedding, confirmed `assertEmbeddingDimensionMatchesVectorStore` now passes against the real `gracesoft-drivesync-dev` index, upserted and queried the real vector back out, then cleaned it up.
+- Also found and flagged (not deleted without asking): a stray leftover Pinecone index (`drivesync-m8-verify-...`) from an earlier live-verification attempt during M8 — a minor cleanup item, unrelated to this fix.

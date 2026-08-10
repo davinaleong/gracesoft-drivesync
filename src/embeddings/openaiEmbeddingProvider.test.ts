@@ -98,4 +98,44 @@ describe("createOpenAiEmbeddingProvider", () => {
     await expect(provider.embed(["a"])).rejects.toEqual({ status: 500 });
     expect(client.createEmbeddings).toHaveBeenCalledTimes(3); // initial + 2 retries
   });
+
+  it("reports the requested dimensions, not the model's native one, when an override is given", () => {
+    const provider = createOpenAiEmbeddingProvider({
+      client: makeFakeClient(),
+      model: "text-embedding-3-small",
+      dimensions: 512,
+    });
+
+    expect(provider.dimensions).toBe(512);
+  });
+
+  it("passes the dimensions override through to the client on every call", async () => {
+    const client = makeFakeClient();
+    const provider = createOpenAiEmbeddingProvider({ client, model: "text-embedding-3-small", dimensions: 512 });
+
+    await provider.embed(["a"]);
+
+    expect(client.createEmbeddings).toHaveBeenCalledWith(["a"], "text-embedding-3-small", 512);
+  });
+
+  it("does not pass a dimensions argument when no override is configured", async () => {
+    const client = makeFakeClient();
+    const provider = createOpenAiEmbeddingProvider({ client, model: "text-embedding-3-small" });
+
+    await provider.embed(["a"]);
+
+    expect(client.createEmbeddings).toHaveBeenCalledWith(["a"], "text-embedding-3-small", undefined);
+  });
+
+  it("rejects a dimensions override on a model that doesn't support it", () => {
+    expect(() =>
+      createOpenAiEmbeddingProvider({ client: makeFakeClient(), model: "text-embedding-ada-002", dimensions: 512 }),
+    ).toThrow(/does not support a custom "dimensions"/);
+  });
+
+  it("rejects a dimensions override larger than the model's native dimension", () => {
+    expect(() =>
+      createOpenAiEmbeddingProvider({ client: makeFakeClient(), model: "text-embedding-3-small", dimensions: 4000 }),
+    ).toThrow(/exceeds/);
+  });
 });

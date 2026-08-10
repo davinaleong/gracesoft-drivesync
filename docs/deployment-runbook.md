@@ -38,7 +38,7 @@ Every variable and its purpose is documented in `.env.example`; this section onl
 | Database & queue | `DATABASE_URL`, `REDIS_URL` | Fixed stack, not swappable — see `.env.example`. |
 | Auth | `API_KEY_PEPPER` | Generate once (32+ random bytes), store as a secret. **Rotating it invalidates every issued API key** — treat it like a signing key, not a config value that gets casually regenerated. |
 | Google Drive | `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` | The private key must keep its `\n` sequences literal, not converted to real newlines — most secret-manager UIs will do this correctly if you paste the JSON key's `private_key` field value directly, but double check after pasting (see the M3 progress doc for a real incident where this went wrong). |
-| Embeddings module | `EMBEDDING_PROVIDER`, `OPENAI_API_KEY`, `OPENAI_EMBEDDING_MODEL` | See below. |
+| Embeddings module | `EMBEDDING_PROVIDER`, `OPENAI_API_KEY`, `OPENAI_EMBEDDING_MODEL`, `OPENAI_EMBEDDING_DIMENSIONS` | See below. |
 | Vector store module | `VECTOR_STORE`, `PINECONE_API_KEY`, `PINECONE_INDEX_NAME` | See below. |
 | Scheduling | `SYNC_CRON`, `DRIVE_RATE_LIMIT_PER_ACCOUNT` | Only read by the worker process. |
 | MCP | `MCP_SERVER_PORT` | Only read by the MCP process. |
@@ -53,7 +53,8 @@ All required vars are validated at process startup (`src/config/env.ts`) — a m
 
 - `EMBEDDING_PROVIDER=openai`
 - `OPENAI_API_KEY` — from your OpenAI account.
-- `OPENAI_EMBEDDING_MODEL` — defaults to `text-embedding-3-small` (1536 dimensions). Other supported models: `text-embedding-3-large` (3072) and `text-embedding-ada-002` (1536). The dimension is looked up from a fixed table in code (`src/embeddings/openaiEmbeddingProvider.ts`) — an unrecognized model name fails at startup rather than guessing.
+- `OPENAI_EMBEDDING_MODEL` — defaults to `text-embedding-3-small` (native dimension 1536). Other supported models: `text-embedding-3-large` (3072) and `text-embedding-ada-002` (1536). The native dimension is looked up from a fixed table in code (`src/embeddings/openaiEmbeddingProvider.ts`) — an unrecognized model name fails at startup rather than guessing.
+- `OPENAI_EMBEDDING_DIMENSIONS` — optional. Requests a **truncated** output via OpenAI's `dimensions` API parameter instead of the model's native dimension, e.g. `512` against a native-1536 model. Only `text-embedding-3-small`/`-large` support this; setting it with `text-embedding-ada-002` fails at startup with a clear error, as does a value larger than the model's native dimension. This is what lets a vector store index be sized independently of whichever model produced the embeddings.
 
 ### Vector store module — Pinecone
 
@@ -67,9 +68,9 @@ Embedding dimension is fixed per model and baked into a Pinecone index at creati
 
 **Concrete incident, found while testing this project**: a real deployment had `OPENAI_EMBEDDING_MODEL=text-embedding-3-small` (1536 dimensions) configured against a Pinecone index that had been created with dimension 512. Every scheduled sync run failed immediately with a clear error — correctly, per M9's design — but that also means **zero syncing happens until it's fixed**. Before deploying:
 
-1. Know your embedding model's dimension (1536 for `text-embedding-3-small`/`text-embedding-ada-002`, 3072 for `text-embedding-3-large`).
+1. Know your effective embedding dimension: `OPENAI_EMBEDDING_DIMENSIONS` if set, otherwise the model's native dimension (1536 for `text-embedding-3-small`/`text-embedding-ada-002`, 3072 for `text-embedding-3-large`).
 2. Check the target Pinecone index's dimension (Pinecone console, or `describeIndexStats()`).
-3. If they don't match: either create a new index with the correct dimension and point `PINECONE_INDEX_NAME` at it, or change `OPENAI_EMBEDDING_MODEL` to one that matches the existing index — not both casually, and never on a deployment with existing synced data without planning a full resync first.
+3. If they don't match, you have three options — pick one deliberately, never mix casually: create a new index at the correct dimension and repoint `PINECONE_INDEX_NAME`; change `OPENAI_EMBEDDING_MODEL` to one whose native dimension matches; or set `OPENAI_EMBEDDING_DIMENSIONS` to truncate the model's output down to the existing index's dimension (the fix that resolved this exact incident — the existing indexes were already at 512, so it was cheaper to configure the embedding provider to match them than to recreate real infrastructure). Never on a deployment with existing synced data without planning a full resync first.
 
 ### Swapping either module later
 

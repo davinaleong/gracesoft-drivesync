@@ -17,6 +17,7 @@ export function createEmbeddingProvider(): EmbeddingProvider {
       return createOpenAiEmbeddingProvider({
         client: createOpenAiEmbeddingClient(env.OPENAI_API_KEY),
         model: env.OPENAI_EMBEDDING_MODEL,
+        dimensions: env.OPENAI_EMBEDDING_DIMENSIONS,
       });
     default:
       throw new Error(`Unknown EMBEDDING_PROVIDER "${env.EMBEDDING_PROVIDER}". Supported: openai.`);

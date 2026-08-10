@@ -710,7 +710,7 @@ npm run mcp      # MCP server on MCP_SERVER_PORT (default 3001)</code></pre>
       <div class="prose">
         <div class="callout critical">
           <span class="callout-label">Dimension compatibility — check before every deploy</span>
-          Embedding dimension is fixed per model and baked into a vector index at creation time. There is no partial or live migration between mismatched dimensions — <code>assertEmbeddingDimensionMatchesVectorStore</code> fails every sync run closed rather than writing wrong-dimension vectors. A real deployment hit this: <code>text-embedding-3-small</code> (1536 dims) configured against a Pinecone index created at 512 dims. Every run failed correctly — but that also means zero syncing happens until the mismatch is fixed.
+          Embedding dimension is fixed per model and baked into a vector index at creation time. There is no partial or live migration between mismatched dimensions — <code>assertEmbeddingDimensionMatchesVectorStore</code> fails every sync run closed rather than writing wrong-dimension vectors. A real deployment hit this: <code>text-embedding-3-small</code> (1536 dims natively) configured against Pinecone indexes created at 512 dims. Every run failed correctly — but that also means zero syncing happens until the mismatch is fixed. <strong>Fix used here:</strong> set <code>OPENAI_EMBEDDING_DIMENSIONS=512</code> to truncate the model's output to match the existing indexes, rather than recreating real infrastructure — verified end-to-end against the real OpenAI and Pinecone APIs.
         </div>
         <p>Swapping either provider on a deployment with existing data always means a full resync — there's no in-place migration, by design. See <a href="#contributing">Adding a provider</a> for implementing a different one.</p>
       </div>
@@ -845,7 +845,8 @@ npm run mcp      # MCP server on MCP_SERVER_PORT (default 3001)</code></pre>
             <tr><td><code>GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY</code></td><td>Yes</td><td>—</td><td>Keep <code>\n</code> sequences literal</td></tr>
             <tr><td><code>EMBEDDING_PROVIDER</code></td><td>No</td><td><code>openai</code></td><td>Config-driven registry</td></tr>
             <tr><td><code>OPENAI_API_KEY</code></td><td>Yes*</td><td>—</td><td>*when <code>EMBEDDING_PROVIDER=openai</code></td></tr>
-            <tr><td><code>OPENAI_EMBEDDING_MODEL</code></td><td>No</td><td><code>text-embedding-3-small</code></td><td>Fixed dimension per model</td></tr>
+            <tr><td><code>OPENAI_EMBEDDING_MODEL</code></td><td>No</td><td><code>text-embedding-3-small</code></td><td>Fixed native dimension per model</td></tr>
+            <tr><td><code>OPENAI_EMBEDDING_DIMENSIONS</code></td><td>No</td><td>model's native dimension</td><td>Truncate output — 3-small/-large only, not ada-002</td></tr>
             <tr><td><code>VECTOR_STORE</code></td><td>No</td><td><code>pinecone</code></td><td>Config-driven registry</td></tr>
             <tr><td><code>PINECONE_API_KEY</code></td><td>Yes*</td><td>—</td><td>*when <code>VECTOR_STORE=pinecone</code></td></tr>
             <tr><td><code>PINECONE_INDEX_NAME</code></td><td>No</td><td><code>drivesync</code></td><td>Must already exist — see dimension check above</td></tr>

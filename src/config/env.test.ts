@@ -24,6 +24,12 @@ describe("loadEnv", () => {
     expect(env.VECTOR_STORE).toBe("pinecone");
     expect(env.SYNC_CRON).toBe("*/15 * * * *");
     expect(env.MCP_SERVER_PORT).toBe(3001);
+    expect(env.OPENAI_EMBEDDING_DIMENSIONS).toBeUndefined();
+  });
+
+  it("parses OPENAI_EMBEDDING_DIMENSIONS when set", () => {
+    const env = loadEnv({ ...REQUIRED, OPENAI_EMBEDDING_DIMENSIONS: "512" });
+    expect(env.OPENAI_EMBEDDING_DIMENSIONS).toBe(512);
   });
 
   it("coerces numeric string vars to numbers", () => {

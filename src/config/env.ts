@@ -21,6 +21,11 @@ const envSchema = z.object({
   EMBEDDING_PROVIDER: z.string().default("openai"),
   OPENAI_API_KEY: z.string().min(1, "OPENAI_API_KEY is required"),
   OPENAI_EMBEDDING_MODEL: z.string().default("text-embedding-3-small"),
+  // Requests a truncated output from OpenAI's `dimensions` API parameter
+  // (text-embedding-3-small/-large only) instead of the model's native
+  // dimension — lets the vector store index be sized independently of
+  // whichever model produced the embeddings.
+  OPENAI_EMBEDDING_DIMENSIONS: z.coerce.number().int().positive().optional(),
 
   VECTOR_STORE: z.string().default("pinecone"),
   PINECONE_API_KEY: z.string().min(1, "PINECONE_API_KEY is required"),
