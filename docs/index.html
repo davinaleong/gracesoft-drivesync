@@ -5,63 +5,79 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>GraceSoft DriveSync — Documentation</title>
 <meta name="description" content="Full reference documentation for GraceSoft DriveSync: architecture, REST/MCP API, pluggable providers, and deployment." />
+<link rel="preconnect" href="https://fonts.bunny.net" />
+<link href="https://fonts.bunny.net/css?family=montserrat:400,500,600,700|playfair-display:400,600,700|source-code-pro:400,600&display=swap" rel="stylesheet" />
 <style>
+  /*
+    Brand system per _internal-docs/05-brand-guidelines.md:
+    - Indigo scale → --accent* (800 is the exact wordmark purple)
+    - Black scale → neutrals (--bg/--surface/--ink/--muted/--faint/--border/--code-bg)
+    - Montserrat (primary/sans) → body copy + UI chrome (nav, labels, badges, table headers)
+    - Playfair Display (secondary/serif) → headings + the sidebar tagline (the "editorial" voice)
+    - Source Code Pro (monospace) → code, and anything that reads as a literal
+      identifier (env vars, anchor paths, the pipeline diagram's code-symbol labels)
+    Semantic status colors (success/warning/critical) aren't part of either brand
+    scale — they're a separate, deliberately non-brand set of hues so a warning
+    callout is never confused with "this is brand-colored," and so they don't
+    collide with indigo now that indigo means something specific (the accent).
+  */
   :root {
-    --accent: #a8672a;
-    --accent-strong: #7c4b1c;
-    --accent-tint: #f0e2ce;
-    --bg: #f6f5f1;
+    --accent: #372aac;
+    --accent-strong: #342b87;
+    --accent-tint: #e8e5ff;
+    --bg: #ffffff;
     --surface: #ffffff;
-    --ink: #201d18;
-    --muted: #5b5750;
-    --faint: #8a857b;
-    --border: #e2ded4;
-    --code-bg: #eeebe3;
+    --ink: #0e0e0e;
+    --muted: #4c4c4c;
+    --faint: #6f6f6f;
+    --border: #e9e9e9;
+    --code-bg: #fafafa;
     --success: #3f8f5e;
     --warning: #c0632e;
     --critical: #b4402f;
-    --shadow: 0 1px 2px rgba(32, 29, 24, 0.06);
+    --shadow: 0 1px 2px rgba(14, 14, 14, 0.08);
 
-    --mono: ui-monospace, "SF Mono", "IBM Plex Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
-    --serif: Charter, "Iowan Old Style", "Palatino Linotype", Georgia, "Times New Roman", serif;
+    --sans: Montserrat, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --display: "Playfair Display", Georgia, "Times New Roman", serif;
+    --mono: "Source Code Pro", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
     --content-max: 46rem;
     --wide-max: 60rem;
   }
 
   :root[data-theme="dark"] {
-    --accent: #d68a45;
-    --accent-strong: #f0a763;
-    --accent-tint: #3a2c1c;
-    --bg: #171310;
-    --surface: #1f1a15;
-    --ink: #f0ede6;
-    --muted: #a79e8f;
-    --faint: #7d7568;
-    --border: #342d24;
-    --code-bg: #241e17;
+    --accent: #8d80fe;
+    --accent-strong: #b1a8ff;
+    --accent-tint: #1f1a51;
+    --bg: #000000;
+    --surface: #0e0e0e;
+    --ink: #fafafa;
+    --muted: #a3a3a3;
+    --faint: #6f6f6f;
+    --border: #393939;
+    --code-bg: #1e1e1e;
     --success: #5cb37f;
     --warning: #d98552;
     --critical: #d1655a;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   }
 
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --accent: #d68a45;
-      --accent-strong: #f0a763;
-      --accent-tint: #3a2c1c;
-      --bg: #171310;
-      --surface: #1f1a15;
-      --ink: #f0ede6;
-      --muted: #a79e8f;
-      --faint: #7d7568;
-      --border: #342d24;
-      --code-bg: #241e17;
+      --accent: #8d80fe;
+      --accent-strong: #b1a8ff;
+      --accent-tint: #1f1a51;
+      --bg: #000000;
+      --surface: #0e0e0e;
+      --ink: #fafafa;
+      --muted: #a3a3a3;
+      --faint: #6f6f6f;
+      --border: #393939;
+      --code-bg: #1e1e1e;
       --success: #5cb37f;
       --warning: #d98552;
       --critical: #d1655a;
-      --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
     }
   }
 
@@ -76,21 +92,21 @@
     margin: 0;
     background: var(--bg);
     color: var(--ink);
-    font-family: var(--serif);
+    font-family: var(--sans);
     font-size: 17px;
     line-height: 1.65;
     -webkit-font-smoothing: antialiased;
   }
 
-  a { color: var(--accent-strong); text-decoration-thickness: 1px; }
-  a:hover { color: var(--accent); }
+  a { color: var(--accent); text-decoration-thickness: 1px; }
+  a:hover { color: var(--accent-strong); }
   a:focus-visible, button:focus-visible, summary:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 
   h1, h2, h3, h4 {
-    font-family: var(--mono);
+    font-family: var(--display);
     font-weight: 600;
     letter-spacing: -0.01em;
     text-wrap: balance;
@@ -167,7 +183,7 @@
   :root[data-theme="light"] .brand-logo-dark { display: none; }
 
   .brand-tag {
-    font-family: var(--serif);
+    font-family: var(--display);
     font-style: italic;
     color: var(--muted);
     font-size: 0.92rem;
@@ -180,7 +196,7 @@
   }
 
   .navgroup-label {
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 0.68rem;
     text-transform: uppercase;
     letter-spacing: 0.09em;
@@ -189,7 +205,7 @@
   }
 
   .navlink {
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 0.84rem;
     color: var(--muted);
     text-decoration: none;
@@ -206,7 +222,7 @@
 
   .sidebar-foot {
     margin-top: auto;
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 0.75rem;
     color: var(--faint);
     display: flex;
@@ -234,7 +250,7 @@
   }
 
   .eyebrow {
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -247,7 +263,7 @@
   }
 
   .masthead .lede {
-    font-family: var(--serif);
+    font-family: var(--sans);
     font-size: 1.08rem;
     color: var(--muted);
     max-width: var(--content-max);
@@ -262,7 +278,7 @@
   }
 
   .badge {
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 0.72rem;
     letter-spacing: 0.02em;
     padding: 0.25rem 0.55rem;
@@ -318,7 +334,7 @@
 
   .callout.critical { border-left-color: var(--critical); }
   .callout-label {
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -362,7 +378,7 @@
   }
 
   th {
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -374,18 +390,15 @@
   td.num { font-variant-numeric: tabular-nums; }
 
   .pill {
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 0.7rem;
     padding: 0.15rem 0.5rem;
     border-radius: 999px;
     display: inline-block;
     font-weight: 600;
   }
-  .pill.get { background: #d9e9df; color: #1f5a3a; }
-  .pill.post { background: #e6dbc9; color: var(--accent-strong); }
-  :root[data-theme="dark"] .pill.get, @media (prefers-color-scheme: dark) { }
   .pill.get { background: color-mix(in srgb, var(--success) 22%, transparent); color: var(--success); }
-  .pill.post { background: color-mix(in srgb, var(--accent) 26%, transparent); color: var(--accent-strong); }
+  .pill.post { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--accent-strong); }
 
   .status-dot {
     display: inline-block;
@@ -407,11 +420,11 @@
   }
   .pipeline svg { width: 100%; height: auto; display: block; }
   .pipeline text {
-    font-family: var(--mono);
+    font-family: var(--sans);
     fill: var(--ink);
   }
   .pipeline .stage-label { font-size: 12.5px; font-weight: 600; }
-  .pipeline .stage-tag { font-size: 10px; fill: var(--muted); }
+  .pipeline .stage-tag { font-family: var(--mono); font-size: 10px; fill: var(--muted); }
   .pipeline .stage-box { fill: var(--surface); stroke: var(--border); stroke-width: 1.2; }
   .pipeline .stage-box.accent { stroke: var(--accent); }
   .pipeline .arrow { stroke: var(--faint); stroke-width: 1.4; fill: none; }
@@ -445,7 +458,7 @@
   }
 
   .module-kind {
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -462,7 +475,7 @@
     border-top: 1px solid var(--border);
     padding-top: 1.5rem;
     margin-top: 4rem;
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 0.78rem;
     color: var(--faint);
     display: flex;
