@@ -144,10 +144,29 @@
     font-size: 0.78rem;
     color: var(--faint);
     display: flex;
+    align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 0.75rem;
   }
+
+  .footer-logo {
+    height: 1rem;
+    width: auto;
+    display: block;
+    opacity: 0.72;
+  }
+
+  .footer-logo-dark { display: none; }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .footer-logo-light { display: none; }
+    :root:not([data-theme="light"]) .footer-logo-dark { display: block; }
+  }
+  :root[data-theme="dark"] .footer-logo-light { display: none; }
+  :root[data-theme="dark"] .footer-logo-dark { display: block; }
+  :root[data-theme="light"] .footer-logo-light { display: block; }
+  :root[data-theme="light"] .footer-logo-dark { display: none; }
 </style>
 </head>
 <body>
@@ -201,7 +220,10 @@
   </section>
 
   <div class="page-foot">
-    <span>GraceSoft DriveSync</span>
+    <span>
+      <img src="assets/wm.svg" alt="GraceSoft DriveSync" class="footer-logo footer-logo-light" />
+      <img src="assets/wm-dark.svg" alt="GraceSoft DriveSync" class="footer-logo footer-logo-dark" />
+    </span>
     <a href="terms.html">Terms &amp; Conditions</a>
   </div>
 </div>

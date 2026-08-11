@@ -479,9 +479,23 @@
     font-size: 0.78rem;
     color: var(--faint);
     display: flex;
+    align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 0.75rem;
+  }
+
+  .page-foot-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .footer-logo {
+    height: 1rem;
+    width: auto;
+    display: block;
+    opacity: 0.72;
   }
 
   .skip-link {
@@ -987,7 +1001,11 @@ npm run mcp      # MCP server on MCP_SERVER_PORT (default 3001)</code></pre>
     </section>
 
     <footer class="page-foot">
-      <span>GraceSoft DriveSync — MIT License</span>
+      <span class="page-foot-brand">
+        <img src="assets/wm.svg" alt="GraceSoft DriveSync" class="footer-logo brand-logo-light" />
+        <img src="assets/wm-dark.svg" alt="GraceSoft DriveSync" class="footer-logo brand-logo-dark" />
+        — MIT License
+      </span>
       <span>Docs generated from the project's own architecture, API, and deployment notes</span>
       <span><a href="privacy.html">Privacy Policy</a> · <a href="terms.html">Terms &amp; Conditions</a></span>
     </footer>
