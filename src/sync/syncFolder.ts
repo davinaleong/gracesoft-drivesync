@@ -4,6 +4,7 @@ import { computeContentHash, hasContentChanged } from "../dedup/contentHash.js";
 import { buildVectorId, computeStaleVectorIds } from "../dedup/vectorIds.js";
 import type { DriveClient } from "../drive/driveClient.js";
 import type { EmbeddingProvider } from "../embeddings/embeddingProvider.js";
+import { logger } from "../lib/logger.js";
 import type { TextExtractor } from "../extraction/textExtractor.js";
 import { detectChanges } from "./changeDetection.js";
 import type { FileRepository } from "./fileRepository.js";
@@ -63,6 +64,10 @@ export function createFolderSyncer(deps: FolderSyncDeps): FolderSyncer {
           const extraction = await deps.textExtractor.extractText(file);
           if (!extraction.ok) {
             summary.failedFiles.push({ fileId: file.id, reason: extraction.reason });
+            logger.warn(
+              { accountId, driveFolderId: driveFolder.id, fileId: file.id, fileName: file.name, reason: extraction.reason },
+              "file sync failed",
+            );
             continue;
           }
 
@@ -80,6 +85,10 @@ export function createFolderSyncer(deps: FolderSyncDeps): FolderSyncer {
               contentHash,
               chunkCount: previous.chunkCount,
             });
+            logger.debug(
+              { accountId, driveFolderId: driveFolder.id, fileId: file.id, fileName: file.name },
+              "file unchanged, skipped",
+            );
             continue;
           }
 
@@ -120,8 +129,20 @@ export function createFolderSyncer(deps: FolderSyncDeps): FolderSyncer {
 
           if (previous) summary.updated++;
           else summary.added++;
+          logger.info(
+            {
+              accountId,
+              driveFolderId: driveFolder.id,
+              fileId: file.id,
+              fileName: file.name,
+              chunkCount: chunks.length,
+            },
+            previous ? "file updated" : "file added",
+          );
         } catch (err) {
-          summary.failedFiles.push({ fileId: file.id, reason: err instanceof Error ? err.message : String(err) });
+          const reason = err instanceof Error ? err.message : String(err);
+          summary.failedFiles.push({ fileId: file.id, reason });
+          logger.warn({ accountId, driveFolderId: driveFolder.id, fileId: file.id, fileName: file.name, reason }, "file sync failed");
         }
       }
 
@@ -134,8 +155,11 @@ export function createFolderSyncer(deps: FolderSyncDeps): FolderSyncer {
           }
           await deps.fileRepository.deleteByFileIds(driveFolder.id, [deletedFileId]);
           summary.deleted++;
+          logger.info({ accountId, driveFolderId: driveFolder.id, fileId: deletedFileId }, "file deleted");
         } catch (err) {
-          summary.failedFiles.push({ fileId: deletedFileId, reason: err instanceof Error ? err.message : String(err) });
+          const reason = err instanceof Error ? err.message : String(err);
+          summary.failedFiles.push({ fileId: deletedFileId, reason });
+          logger.warn({ accountId, driveFolderId: driveFolder.id, fileId: deletedFileId, reason }, "file delete failed");
         }
       }
 

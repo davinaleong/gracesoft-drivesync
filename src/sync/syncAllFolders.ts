@@ -60,6 +60,18 @@ export function createSyncRunner(deps: SyncRunnerDeps): SyncRunner {
             const outcome = await (async (): Promise<FolderSyncOutcome> => {
               try {
                 const summary = await deps.folderSyncer.syncFolder(folder.accountId, folder);
+                logger.info(
+                  {
+                    accountId: folder.accountId,
+                    driveFolderId: folder.id,
+                    added: summary.added,
+                    updated: summary.updated,
+                    deleted: summary.deleted,
+                    skippedUnchanged: summary.skippedUnchanged,
+                    failedFileCount: summary.failedFiles.length,
+                  },
+                  "folder sync completed",
+                );
                 return { driveFolderId: folder.id, accountId: folder.accountId, ok: true, summary };
               } catch (err) {
                 return {
